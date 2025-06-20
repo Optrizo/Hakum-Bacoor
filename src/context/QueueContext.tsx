@@ -21,6 +21,9 @@ interface QueueContextType {
   addPackage: (pkg: Omit<ServicePackage, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
   updatePackage: (id: string, updates: Partial<ServicePackage>) => Promise<void>;
   deletePackage: (id: string) => Promise<void>;
+  refreshServices: () => Promise<void>;
+  refreshPackages: () => Promise<void>;
+  refreshCars: () => Promise<void>;
 }
 
 const QueueContext = createContext<QueueContextType | undefined>(undefined);
@@ -582,6 +585,59 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const refreshServices = async () => {
+    if (isOperationActive('services-fetch')) return;
+    
+    try {
+      addActiveOperation('services-fetch');
+      setError(null);
+
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error('Supabase error refreshing services:', error);
+        throw error;
+      }
+      
+      setServices(data || []);
+      console.log('Services refreshed successfully:', (data || []).length);
+    } catch (err) {
+      console.error('Error refreshing services:', err);
+    } finally {
+      removeActiveOperation('services-fetch');
+    }
+  };
+
+  const refreshPackages = async () => {
+    if (isOperationActive('packages-fetch')) return;
+    
+    try {
+      addActiveOperation('packages-fetch');
+      setError(null);
+
+      const { data, error } = await supabase
+        .from('service_packages')
+        .select('*')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error('Supabase error refreshing packages:', error);
+        throw error;
+      }
+      
+      setPackages(data || []);
+      console.log('Packages refreshed successfully:', (data || []).length);
+    } catch (err) {
+      console.error('Error refreshing packages:', err);
+    } finally {
+      removeActiveOperation('packages-fetch');
+    }
+  };
+
   return (
     <QueueContext.Provider value={{ 
       cars, 
@@ -595,13 +651,15 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       removeCar,
       addCrew,
       updateCrew,
-      removeCrew,
-      addService,
+      removeCrew,      addService,
       updateService,
       deleteService,
       addPackage,
       updatePackage,
-      deletePackage
+      deletePackage,
+      refreshServices,
+      refreshPackages,
+      refreshCars: fetchCars
     }}>
       {children}
     </QueueContext.Provider>

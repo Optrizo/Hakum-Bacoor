@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import QueueList from './QueueList';
 import AddCarForm from './AddCarForm';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useQueue } from '../context/QueueContext';
 
 const QueueManager: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -10,6 +11,16 @@ const QueueManager: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [carTest, setCarTest] = useState<{ plate: string; model: string } | null>(null);
   const [testError, setTestError] = useState<string | null>(null);
+  const { refreshCars } = useQueue();
+  
+  const handleRefresh = async () => {
+    try {
+      await refreshCars();
+    } catch (error) {
+      console.error('Error refreshing cars:', error);
+      alert('Failed to refresh cars. Please try again.');
+    }
+  };
 
   useEffect(() => {
     async function fetchTables() {
@@ -39,33 +50,41 @@ const QueueManager: React.FC = () => {
   }, []);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between">
+    <div className="space-y-6">      <div className="flex flex-col md:flex-row md:items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Service Queue</h1>
           <p className="text-gray-400">Manage your auto service queue and track progress</p>
         </div>
         
-        <button
-          onClick={() => setShowAddForm(prev => !prev)}
-          className={`mt-4 md:mt-0 flex items-center px-4 py-2 font-medium rounded-md shadow-lg transition-colors ${
-            showAddForm 
-              ? 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700' 
-              : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
-        >
-          {showAddForm ? (
-            <>
-              <X className="h-5 w-5 mr-1" />
-              Cancel
-            </>
-          ) : (
-            <>
-              <Plus className="h-5 w-5 mr-1" />
-              Add Vehicle
-            </>
-          )}
-        </button>
+        <div className="flex space-x-2 mt-4 md:mt-0">
+          <button
+            onClick={handleRefresh}
+            className="inline-flex items-center px-3 py-2 border border-gray-700 shadow-sm text-sm font-medium rounded-md text-gray-300 bg-gray-800 hover:bg-gray-700"
+            title="Refresh queue"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setShowAddForm(prev => !prev)}
+            className={`flex items-center px-4 py-2 font-medium rounded-md shadow-lg transition-colors ${
+              showAddForm 
+                ? 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700' 
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            {showAddForm ? (
+              <>
+                <X className="h-5 w-5 mr-1" />
+                Cancel
+              </>
+            ) : (
+              <>
+                <Plus className="h-5 w-5 mr-1" />
+                Add Vehicle
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {showAddForm && (
