@@ -77,7 +77,6 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }));
       
       setCars(transformedCars);
-      console.log('Cars fetched successfully:', transformedCars.length);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       console.error('Error fetching cars:', err);
@@ -103,7 +102,6 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       
       setServices(data || []);
-      console.log('Services fetched successfully:', (data || []).length);
     } catch (err) {
       console.error('Error fetching services:', err);
     } finally {
@@ -128,7 +126,6 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       
       setCrews(data || []);
-      console.log('Crew members fetched successfully:', (data || []).length);
     } catch (err) {
       console.error('Error fetching crews:', err);
     } finally {
@@ -153,7 +150,6 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       
       setPackages(data || []);
-      console.log('Service packages fetched successfully:', (data || []).length);
     } catch (err) {
       console.error('Error fetching packages:', err);
     } finally {

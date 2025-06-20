@@ -21,93 +21,83 @@ const CustomerView: React.FC = () => {
   };
 
   const ServiceSection = ({ title, cars, color }: { title: string; cars: Car[]; color: string }) => (
-    <div className={`bg-black rounded-lg shadow-sm p-6 border-l-4 ${color}`}>
-      <div className="flex items-center gap-2 mb-4">
-        <h2 className="text-xl font-bold text-white">{title}</h2>
-        <span className="ml-auto bg-[#116AF8] px-3 py-1 rounded-full text-sm font-medium text-white">
+    <div className={`bg-surface-dark rounded-2xl shadow-lg p-8 border-4 ${color} flex flex-col min-h-[32rem] font-goodland`}>
+      <div className="flex items-center gap-4 mb-8">
+        <h2 className="text-4xl font-extrabold text-text-primary-dark tracking-wide uppercase drop-shadow-lg font-goodland">{title}</h2>
+        <span className="ml-auto bg-brand-blue px-6 py-2 rounded-full text-2xl font-bold text-white shadow-lg font-goodland">
           {cars.length}
         </span>
       </div>
       {cars.length > 0 ? (
-        <div className="space-y-4">
+        <div className="space-y-8">
           {cars.map(car => {
             const crewNames = getCrewNames(car.crew);
-            
             return (
-              <div key={car.id} className="bg-[#0B2699] rounded-lg p-4 transform transition-all duration-300 hover:scale-[1.02] border border-[#878EA0]">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <span className="inline-block bg-[#116AF8] text-white font-bold px-3 py-1 rounded mb-3">
-                      {car.plate}
-                    </span>
-                    <div className="space-y-2">
-                      <p className="text-white font-medium text-lg">{car.model}</p>
-                      <p className="text-[#DCE3EB] text-sm">{car.service}</p>
-                      {crewNames.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          <span className="text-xs text-[#DCE3EB] mr-1">Crew:</span>
-                          {crewNames.map((name, idx) => (
-                            <span key={idx} className="text-xs bg-[#878EA0] text-white px-2 py-0.5 rounded-full border border-[#DCE3EB]">
-                              {name}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right ml-4">
-                    <p className="text-sm text-[#DCE3EB]">
+              <div key={car.id} className="bg-background-dark rounded-xl p-6 border-2 border-border-dark flex flex-col gap-4 font-goodland">
+                <div className="flex justify-between items-center">
+                  <span className="inline-block bg-brand-blue text-white font-extrabold text-3xl px-6 py-2 rounded-xl tracking-widest shadow-md font-goodland">
+                    {car.plate}
+                  </span>
+                  <div className="text-right">
+                    <p className="text-lg text-text-secondary-dark font-semibold font-goodland">
                       {new Date(car.created_at).toLocaleDateString()}
                     </p>
-                    <p className="text-xs text-[#878EA0] mt-1">
-                      {new Date(car.created_at).toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
+                    <p className="text-base text-text-secondary-dark mt-1 font-goodland">
+                      {new Date(car.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <p className="text-text-primary-dark font-bold text-2xl font-goodland">{car.model}</p>
+                  <p className="text-brand-blue text-xl font-semibold font-goodland">{car.service}</p>
+                  {crewNames.length > 0 && (
+                    <div className="flex flex-wrap gap-2 items-center mt-2">
+                      <span className="text-lg text-text-secondary-dark font-semibold font-goodland">Crew:</span>
+                      {crewNames.map((name, idx) => (
+                        <span key={idx} className="text-lg bg-surface-dark text-white px-4 py-1 rounded-full border border-border-dark font-bold font-goodland">
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
       ) : (
-        <p className="text-[#DCE3EB] text-center py-4">No vehicles in this status</p>
+        <p className="text-text-secondary-dark text-center py-12 text-2xl font-semibold font-goodland">No vehicles in this status</p>
       )}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-black">
-      <header className="bg-black shadow-md border-b border-[#878EA0]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center">
-              <img src="/Hakum V2 (OW).png" alt="Hakum Auto Care" className="h-12" />
-            </div>
-            <div className="text-white text-sm">
-              Live Queue Status
-            </div>
-          </div>
+    <div className="min-h-screen bg-background-dark flex flex-col items-center justify-start pt-8 pb-8 px-8 font-goodland">
+      <header className="w-full max-w-[1920px] bg-surface-dark shadow-lg border-b-4 border-brand-blue rounded-2xl mb-8 p-6 flex items-center justify-between font-goodland">
+        <div className="flex items-center gap-6">
+          <img src="/Hakum V2 (OW).png" alt="Hakum Auto Care" className="h-20 w-auto drop-shadow-lg" />
+          <span className="text-white text-3xl font-extrabold tracking-widest uppercase drop-shadow-lg font-goodland">Hakum Auto Care</span>
+        </div>
+        <div className="text-brand-blue text-2xl font-bold tracking-wide uppercase drop-shadow-lg font-goodland">
+          Live Queue Status
         </div>
       </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid gap-6 md:grid-cols-3">
+      <main className="w-full max-w-[1920px] flex-1 flex flex-col justify-center font-goodland">
+        <div className="grid gap-12 grid-cols-1 md:grid-cols-3">
           <ServiceSection
             title="Waiting"
             cars={groupedCars.waiting}
-            color="border-[#116AF8]"
+            color="border-brand-blue"
           />
           <ServiceSection
             title="In Progress"
             cars={groupedCars.inProgress}
-            color="border-[#20BCED]"
+            color="border-brand-cyan"
           />
           <ServiceSection
             title="Ready for Payment"
             cars={groupedCars.readyForPayment}
-            color="border-[#116AF8]"
+            color="border-brand-blue"
           />
         </div>
       </main>

@@ -3,6 +3,7 @@ import QueueList from './QueueList';
 import AddCarForm from './AddCarForm';
 import { Plus, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useQueue } from '../context/QueueContext';
 
 const QueueManager: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -10,6 +11,7 @@ const QueueManager: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [carTest, setCarTest] = useState<{ plate: string; model: string } | null>(null);
   const [testError, setTestError] = useState<string | null>(null);
+  const { cars, loading, error: queueError } = useQueue();
 
   useEffect(() => {
     async function fetchTables() {
@@ -37,6 +39,14 @@ const QueueManager: React.FC = () => {
     }
     fetchCarTest();
   }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (queueError) {
+    return <div className="text-red-500">Error: {queueError}</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -74,18 +84,7 @@ const QueueManager: React.FC = () => {
         </div>
       )}
 
-      <QueueList />
-
-      <div style={{ marginTop: 20, padding: 10, border: '1px solid #ccc' }}>
-        <strong>Supabase Connection Test:</strong>
-        {testError ? (
-          <div style={{ color: 'red' }}>Error: {testError}</div>
-        ) : carTest ? (
-          <div>First car in database: {carTest.plate} ({carTest.model})</div>
-        ) : (
-          <div>Loading test car...</div>
-        )}
-      </div>
+      <QueueList cars={cars} />
     </div>
   );
 };

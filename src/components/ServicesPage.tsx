@@ -197,62 +197,59 @@ const ServicesPage: React.FC = () => {
     }));
   };
 
+  // Memoized forms (to prevent re-renders from killing input state)
   const ServiceForm = React.useMemo(() => (
-    <form onSubmit={handleServiceSubmit} className="bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-800 mb-6">
-      <h3 className="text-lg font-medium text-white mb-4">
+    <form onSubmit={handleServiceSubmit} className="bg-surface-light dark:bg-surface-dark p-4 sm:p-6 rounded-lg shadow-sm border border-border-light dark:border-border-dark mb-6">
+      <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-4">
         {editingService ? 'Edit Service' : 'Add New Service'}
       </h3>
       <div className="space-y-4">
         <div>
-          <label htmlFor="service-name" className="block text-sm font-medium text-gray-300 mb-1">
+          <label htmlFor="service-name" className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">
             Service Name *
           </label>
           <input
             type="text"
             id="service-name"
             value={serviceFormData.name}
-            onChange={(e) => setServiceFormDataPersist({ ...serviceFormData, name: e.target.value })}
-            className="block w-full rounded-md bg-gray-800 border border-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-white p-3"
-            placeholder="Enter service name"
+            onChange={(e) => setServiceFormData(prev => ({...prev, name: e.target.value}))}
+            className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3"
+            placeholder="e.g., Premium Wash"
             required
-            autoComplete="off"
           />
         </div>
         
         <div>
-          <label htmlFor="service-description" className="block text-sm font-medium text-gray-300 mb-1">
-            Description
+          <label htmlFor="service-description" className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">
+            Description <span className="text-gray-500">(Optional)</span>
           </label>
           <textarea
             id="service-description"
             value={serviceFormData.description}
-            onChange={(e) => setServiceFormDataPersist({ ...serviceFormData, description: e.target.value })}
-            className="block w-full rounded-md bg-gray-800 border border-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-white p-3"
+            onChange={(e) => setServiceFormData(prev => ({...prev, description: e.target.value}))}
+            className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3"
             rows={3}
-            placeholder="Enter service description"
-            autoComplete="off"
+            placeholder="Briefly describe the service"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">
             Pricing by Car Size *
           </label>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {CAR_SIZES.map(size => (
               <div key={size.value}>
-                <label className="block text-xs text-gray-400 mb-1">{size.label}</label>
+                <label htmlFor={`service-price-${size.value}`} className="block text-xs text-text-secondary-light dark:text-text-secondary-dark mb-1 capitalize">{size.label}</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">₱</span>
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary-light dark:text-text-secondary-dark">₱</span>
                   <input
                     type="number"
+                    id={`service-price-${size.value}`}
                     value={serviceFormData.pricing[size.value] || ''}
                     onChange={(e) => handleServicePricingChange(size.value, e)}
-                    className="block w-full pl-8 pr-3 py-2 rounded-md bg-gray-800 border border-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-white"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    autoComplete="off"
+                    className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3 pl-8"
+                    placeholder="0"
                   />
                 </div>
               </div>
@@ -260,104 +257,92 @@ const ServicesPage: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      <div className="mt-6 flex justify-end space-x-2">
+      <div className="flex justify-end space-x-3 mt-6">
         <button
           type="button"
           onClick={resetServiceForm}
-          className="inline-flex items-center px-4 py-2 border border-gray-700 shadow-sm text-sm font-medium rounded-md text-gray-300 bg-gray-800 hover:bg-gray-700"
+          className="px-4 py-2 border border-border-light dark:border-border-dark text-sm font-medium rounded-md text-text-secondary-light dark:text-text-secondary-dark hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-brand-blue hover:bg-brand-dark-blue"
         >
-          {editingService ? 'Update Service' : 'Add Service'}
+          {editingService ? 'Update Service' : 'Save Service'}
         </button>
       </div>
     </form>
   ), [serviceFormData, editingService]);
 
   const PackageForm = React.useMemo(() => (
-    <form onSubmit={handlePackageSubmit} className="bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-800 mb-6">
-      <h3 className="text-lg font-medium text-white mb-4">
+    <form onSubmit={handlePackageSubmit} className="bg-surface-light dark:bg-surface-dark p-4 sm:p-6 rounded-lg shadow-sm border border-border-light dark:border-border-dark mb-6">
+      <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-4">
         {editingPackage ? 'Edit Package' : 'Add New Package'}
       </h3>
       <div className="space-y-4">
         <div>
-          <label htmlFor="package-name" className="block text-sm font-medium text-gray-300 mb-1">
+          <label htmlFor="package-name" className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">
             Package Name *
           </label>
           <input
             type="text"
             id="package-name"
             value={packageFormData.name}
-            onChange={(e) => setPackageFormDataPersist({ ...packageFormData, name: e.target.value })}
-            className="block w-full rounded-md bg-gray-800 border border-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-white p-3"
-            placeholder="e.g., Platinum Package"
+            onChange={(e) => setPackageFormData(prev => ({...prev, name: e.target.value}))}
+            className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3"
+            placeholder="e.g., Full Service Package"
             required
-            autoComplete="off"
           />
         </div>
-        
         <div>
-          <label htmlFor="package-description" className="block text-sm font-medium text-gray-300 mb-1">
-            Description
+          <label htmlFor="package-description" className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">
+            Description <span className="text-gray-500">(Optional)</span>
           </label>
           <textarea
             id="package-description"
             value={packageFormData.description}
-            onChange={(e) => setPackageFormDataPersist({ ...packageFormData, description: e.target.value })}
-            className="block w-full rounded-md bg-gray-800 border border-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-white p-3"
+            onChange={(e) => setPackageFormData(prev => ({...prev, description: e.target.value}))}
+            className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3"
             rows={3}
-            placeholder="Enter package description"
-            autoComplete="off"
+            placeholder="What's included in this package?"
           />
         </div>
-
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">
             Included Services *
           </label>
-          <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-700 rounded-md p-3 bg-gray-800">
-            {services.length === 0 ? (
-              <p className="text-gray-400 text-sm">No services available. Please add services first.</p>
-            ) : (
-              services.map(service => (
-                <label key={service.id} className="flex items-center cursor-pointer hover:bg-gray-700 p-2 rounded">
-                  <input
-                    type="checkbox"
-                    checked={packageFormData.service_ids.includes(service.id)}
-                    onChange={() => handleServiceToggle(service.id)}
-                    className="form-checkbox h-4 w-4 text-blue-600 bg-gray-900 border-gray-700 rounded focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-sm text-white">{service.name}</span>
-                </label>
-              ))
-            )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-background-light dark:bg-background-dark rounded-md border border-border-light dark:border-border-dark">
+            {services.map(service => (
+              <label key={service.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={packageFormData.service_ids.includes(service.id)}
+                  onChange={() => handleServiceToggle(service.id)}
+                  className="h-4 w-4 rounded bg-background-light dark:bg-gray-700 border-border-light dark:border-border-dark text-brand-blue focus:ring-brand-blue"
+                />
+                <span className="text-sm text-text-primary-light dark:text-text-primary-dark">{service.name}</span>
+              </label>
+            ))}
           </div>
         </div>
-
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">
             Package Pricing by Car Size *
           </label>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {CAR_SIZES.map(size => (
               <div key={size.value}>
-                <label className="block text-xs text-gray-400 mb-1">{size.label}</label>
+                <label htmlFor={`package-price-${size.value}`} className="block text-xs text-text-secondary-light dark:text-text-secondary-dark mb-1 capitalize">{size.label}</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">₱</span>
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary-light dark:text-text-secondary-dark">₱</span>
                   <input
                     type="number"
+                    id={`package-price-${size.value}`}
                     value={packageFormData.pricing[size.value] || ''}
                     onChange={(e) => handlePackagePricingChange(size.value, e)}
-                    className="block w-full pl-8 pr-3 py-2 rounded-md bg-gray-800 border border-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-white"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    autoComplete="off"
+                    className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3 pl-8"
+                    placeholder="0"
                   />
                 </div>
               </div>
@@ -365,201 +350,184 @@ const ServicesPage: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      <div className="mt-6 flex justify-end space-x-2">
+      <div className="flex justify-end space-x-3 mt-6">
         <button
           type="button"
           onClick={resetPackageForm}
-          className="inline-flex items-center px-4 py-2 border border-gray-700 shadow-sm text-sm font-medium rounded-md text-gray-300 bg-gray-800 hover:bg-gray-700"
+          className="px-4 py-2 border border-border-light dark:border-border-dark text-sm font-medium rounded-md text-text-secondary-light dark:text-text-secondary-dark hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-brand-blue hover:bg-brand-dark-blue"
         >
-          {editingPackage ? 'Update Package' : 'Add Package'}
+          {editingPackage ? 'Update Package' : 'Save Package'}
         </button>
       </div>
     </form>
-  ), [packageFormData, editingPackage]);
+  ), [packageFormData, editingPackage, services]);
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Services & Packages</h1>
-          <p className="text-gray-400">Manage services and service packages</p>
+          <h1 className="text-2xl font-bold text-text-primary-light dark:text-text-primary-dark">Services & Packages</h1>
+          <p className="text-text-secondary-light dark:text-text-secondary-dark mt-1">Manage your car wash offerings</p>
         </div>
-        {!showAddForm && !editingService && !editingPackage && (
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Add {activeTab === 'services' ? 'Service' : 'Package'}
-          </button>
-        )}
       </div>
-
-      {/* Tabs */}
-      <div className="border-b border-gray-800">
-        <nav className="-mb-px flex space-x-8">
+      
+      <div className="border-b border-border-light dark:border-border-dark">
+        <nav className="-mb-px flex flex-wrap gap-x-6" aria-label="Tabs">
           <button
-            onClick={() => {
-              setActiveTab('services');
-              resetServiceForm();
-              resetPackageForm();
-            }}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            onClick={() => { setActiveTab('services'); setShowAddForm(false); setEditingService(null); setEditingPackage(null); }}
+            className={`${
               activeTab === 'services'
-                ? 'border-blue-500 text-blue-400'
-                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
-            }`}
+                ? 'border-brand-blue text-brand-blue'
+                : 'border-transparent text-text-secondary-light dark:text-text-secondary-dark hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500'
+            } whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors flex items-center`}
           >
-            <Wrench className="h-4 w-4 inline mr-2" />
-            Services ({services.length})
+            <Wrench className="h-5 w-5 mr-2" />
+            <span>Services ({services.length})</span>
           </button>
           <button
-            onClick={() => {
-              setActiveTab('packages');
-              resetServiceForm();
-              resetPackageForm();
-            }}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            onClick={() => { setActiveTab('packages'); setShowAddForm(false); setEditingService(null); setEditingPackage(null); }}
+            className={`${
               activeTab === 'packages'
-                ? 'border-blue-500 text-blue-400'
-                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
-            }`}
+                ? 'border-brand-blue text-brand-blue'
+                : 'border-transparent text-text-secondary-light dark:text-text-secondary-dark hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500'
+            } whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors flex items-center`}
           >
-            <Package className="h-4 w-4 inline mr-2" />
-            Packages ({packages.length})
+            <Package className="h-5 w-5 mr-2" />
+            <span>Packages ({packages.length})</span>
           </button>
         </nav>
       </div>
 
-      {/* Forms */}
-      {showAddForm && activeTab === 'services' && ServiceForm}
-      {showAddForm && activeTab === 'packages' && PackageForm}
+      <div className="flex justify-end">
+        {(!showAddForm && !editingService && !editingPackage) && (
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-brand-blue hover:bg-brand-dark-blue"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            {`Add New ${activeTab === 'services' ? 'Service' : 'Package'}`}
+          </button>
+        )}
+      </div>
+
+      {showAddForm && activeTab === 'services' && !editingService && ServiceForm}
       {editingService && ServiceForm}
+      
+      {showAddForm && activeTab === 'packages' && !editingPackage && PackageForm}
       {editingPackage && PackageForm}
 
-      {/* Services Tab */}
-      {activeTab === 'services' && (
-        <div className="bg-gray-900 shadow overflow-hidden sm:rounded-md border border-gray-800">
-          <ul className="divide-y divide-gray-800">
-            {services.map((service) => (
-              <li key={service.id} className="px-6 py-4 hover:bg-gray-800">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-medium text-white">{service.name}</h3>
-                    {service.description && (
-                      <p className="text-sm text-gray-400 mt-1">{service.description}</p>
-                    )}
-                    <div className="mt-2 grid grid-cols-4 gap-4">
-                      {CAR_SIZES.map(size => {
-                        const pricing = service.pricing as SizePricing;
-                        const price = pricing?.[size.value] || 0;
-                        return (
-                          <div key={size.value} className="text-sm">
-                            <span className="text-gray-400">{size.label}:</span>
-                            <span className="text-blue-400 font-semibold ml-1">
-                              ₱{price.toLocaleString()}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEditService(service)}
-                      className="inline-flex items-center p-2 border border-gray-700 rounded-md text-gray-300 bg-gray-800 hover:bg-gray-700"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteService(service.id)}
-                      className="inline-flex items-center p-2 border border-transparent rounded-md text-white bg-red-600 hover:bg-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))}
-            {services.length === 0 && (
-              <li className="px-6 py-8 text-center">
-                <p className="text-gray-400">No services found. Add your first service to get started.</p>
-              </li>
-            )}
-          </ul>
-        </div>
+      {activeTab === 'services' && !showAddForm && !editingService && (
+        <ServiceList services={services} onEdit={handleEditService} onDelete={handleDeleteService} />
       )}
-
-      {/* Packages Tab */}
-      {activeTab === 'packages' && (
-        <div className="bg-gray-900 shadow overflow-hidden sm:rounded-md border border-gray-800">
-          <ul className="divide-y divide-gray-800">
-            {packages.map((pkg) => (
-              <li key={pkg.id} className="px-6 py-4 hover:bg-gray-800">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-medium text-white">{pkg.name}</h3>
-                    {pkg.description && (
-                      <p className="text-sm text-gray-400 mt-1">{pkg.description}</p>
-                    )}
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-400 mb-1">Included Services:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {pkg.service_ids?.map(serviceId => {
-                          const service = services.find(s => s.id === serviceId);
-                          return service ? (
-                            <span key={serviceId} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-600/20 text-blue-400 border border-blue-600/30">
-                              {service.name}
-                            </span>
-                          ) : null;
-                        })}
-                      </div>
-                    </div>
-                    <div className="mt-2 grid grid-cols-4 gap-4">
-                      {CAR_SIZES.map(size => (
-                        <div key={size.value} className="text-sm">
-                          <span className="text-gray-400">{size.label}:</span>
-                          <span className="text-green-400 font-semibold ml-1">
-                            ₱{(pkg.pricing?.[size.value] || 0).toLocaleString()}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEditPackage(pkg)}
-                      className="inline-flex items-center p-2 border border-gray-700 rounded-md text-gray-300 bg-gray-800 hover:bg-gray-700"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeletePackage(pkg.id)}
-                      className="inline-flex items-center p-2 border border-transparent rounded-md text-white bg-red-600 hover:bg-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))}
-            {packages.length === 0 && (
-              <li className="px-6 py-8 text-center">
-                <p className="text-gray-400">No packages found. Add your first package to get started.</p>
-              </li>
-            )}
-          </ul>
-        </div>
+      {activeTab === 'packages' && !showAddForm && !editingPackage && (
+        <PackageList packages={packages} services={services} onEdit={handleEditPackage} onDelete={handleDeletePackage} />
       )}
     </div>
   );
 };
+
+
+const ServiceList = ({ services, onEdit, onDelete }) => (
+  <div className="bg-surface-light dark:bg-surface-dark shadow overflow-hidden sm:rounded-lg border border-border-light dark:border-border-dark">
+    <ul className="divide-y divide-border-light dark:divide-border-dark">
+      {services.map((service) => (
+        <li key={service.id} className="px-4 py-4 sm:px-6 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex-grow">
+              <h3 className="text-lg font-medium text-text-primary-light dark:text-text-primary-dark">{service.name}</h3>
+              {service.description && <p className="text-sm text-text-secondary-light dark:text-text-secondary-dark mt-1 max-w-prose">{service.description}</p>}
+              <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2 text-sm">
+                {CAR_SIZES.map(size => (
+                  <div key={size.value} className="flex justify-between items-baseline sm:block">
+                    <span className="text-text-secondary-light dark:text-text-secondary-dark capitalize">{size.label}: </span>
+                    <span className="font-semibold text-green-600 dark:text-green-400">
+                      ₱{(service.pricing?.[size.value] || 0).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex space-x-2 self-end sm:self-center flex-shrink-0">
+              <button onClick={() => onEdit(service)} className="p-2 text-text-secondary-light dark:text-text-secondary-dark hover:text-brand-blue bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-md transition-colors">
+                <span className="sr-only">Edit {service.name}</span>
+                <Edit2 className="h-4 w-4" />
+              </button>
+              <button onClick={() => onDelete(service.id)} className="p-2 text-red-500 hover:text-red-400 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-md transition-colors">
+                <span className="sr-only">Delete {service.name}</span>
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </li>
+      ))}
+      {services.length === 0 && (
+        <li className="px-6 py-8 text-center">
+          <p className="text-text-secondary-light dark:text-text-secondary-dark">No services found. Add a service to get started.</p>
+        </li>
+      )}
+    </ul>
+  </div>
+);
+
+const PackageList = ({ packages, services, onEdit, onDelete }) => (
+  <div className="bg-surface-light dark:bg-surface-dark shadow overflow-hidden sm:rounded-lg border border-border-light dark:border-border-dark">
+    <ul className="divide-y divide-border-light dark:divide-border-dark">
+      {packages.map((pkg) => (
+        <li key={pkg.id} className="px-4 py-4 sm:px-6 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex-grow">
+              <h3 className="text-lg font-medium text-text-primary-light dark:text-text-primary-dark">{pkg.name}</h3>
+              {pkg.description && <p className="text-sm text-text-secondary-light dark:text-text-secondary-dark mt-1 max-w-prose">{pkg.description}</p>}
+              <div className="mt-3">
+                <h4 className="text-xs font-semibold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider">Included Services:</h4>
+                <ul className="flex flex-wrap gap-2 mt-1">
+                  {pkg.service_ids.map(id => {
+                    const service = services.find(s => s.id === id);
+                    return service ? (
+                      <li key={id} className="text-sm text-text-primary-light dark:text-text-primary-dark bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                        {service.name}
+                      </li>
+                    ) : null;
+                  })}
+                </ul>
+              </div>
+              <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2 text-sm">
+                {CAR_SIZES.map(size => (
+                  <div key={size.value} className="flex justify-between items-baseline sm:block">
+                    <span className="text-text-secondary-light dark:text-text-secondary-dark capitalize">{size.label}: </span>
+                    <span className="font-semibold text-green-600 dark:text-green-400">
+                      ₱{(pkg.pricing?.[size.value] || 0).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex space-x-2 self-end sm:self-center flex-shrink-0">
+              <button onClick={() => onEdit(pkg)} className="p-2 text-text-secondary-light dark:text-text-secondary-dark hover:text-brand-blue bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-md transition-colors">
+                <span className="sr-only">Edit {pkg.name}</span>
+                <Edit2 className="h-4 w-4" />
+              </button>
+              <button onClick={() => onDelete(pkg.id)} className="p-2 text-red-500 hover:text-red-400 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-md transition-colors">
+                <span className="sr-only">Delete {pkg.name}</span>
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </li>
+      ))}
+      {packages.length === 0 && (
+        <li className="px-6 py-8 text-center">
+          <p className="text-text-secondary-light dark:text-text-secondary-dark">No packages found. Add a package to get started.</p>
+        </li>
+      )}
+    </ul>
+  </div>
+);
 
 export default ServicesPage;

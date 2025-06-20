@@ -26,6 +26,11 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [isPackagesOpen, setIsPackagesOpen] = useState(false);
   const [isCrewOpen, setIsCrewOpen] = useState(false);
+  const [serviceType, setServiceType] = useState<'service' | 'package'>('service');
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isCostOverridden, setIsCostOverridden] = useState(false);
+  const [manualTotalCost, setManualTotalCost] = useState<number | ''>('');
 
   useEffect(() => {
     // Initialize service prices based on car size
@@ -48,7 +53,10 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
 
   useEffect(() => {
     calculateTotalCost();
-  }, [formData.selectedServices, formData.selectedPackages, servicePrices, packagePrices]);
+    if (!isCostOverridden) {
+      setManualTotalCost(totalCost);
+    }
+  }, [formData.selectedServices, formData.selectedPackages, servicePrices, packagePrices, totalCost, isCostOverridden]);
 
   const calculateTotalCost = () => {
     const serviceTotal = formData.selectedServices.reduce((sum, serviceId) => {
@@ -65,11 +73,11 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
   const validate = () => {
     const newErrors: Record<string, string> = {};
     
-    const plateRegex = /^[A-Z]{2,3}[\s-]?\d{3,4}$/;
+    const plateRegex = /^[A-Z]{3}-?\d{4}$/;
     if (!formData.plate.trim()) {
       newErrors.plate = 'License plate is required';
     } else if (!plateRegex.test(formData.plate.toUpperCase())) {
-      newErrors.plate = 'Please enter a valid Philippine license plate (e.g., ABC 1234, ABC-1234)';
+      newErrors.plate = 'Please enter a valid Philippine license plate (e.g., ABC-1234)';
     }
     
     if (!formData.model.trim()) {
@@ -86,8 +94,11 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
     if (formData.selectedServices.length === 0 && formData.selectedPackages.length === 0) {
       newErrors.services = 'Please select at least one service or package';
     }
-    
+    if (manualTotalCost !== '' && isNaN(Number(manualTotalCost))) {
+      newErrors.total_cost = 'Total cost must be a number';
+    }
     setErrors(newErrors);
+    setFormError(Object.keys(newErrors).length > 0 ? 'Please fix the errors below and try again.' : null);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -96,9 +107,20 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
     let formattedValue = value;
 
     if (name === 'plate') {
-      formattedValue = value.toUpperCase();
-      if (value.length === 3) {
-        formattedValue += '-';
+      // Remove any existing dashes and spaces
+      const cleanValue = value.replace(/[-\s]/g, '').toUpperCase();
+      
+      // Enforce Philippine format: 3 letters + 4 numbers
+      let letters = cleanValue.slice(0, 3).replace(/[^A-Z]/g, '');
+      let numbers = cleanValue.slice(3, 7).replace(/[^0-9]/g, '');
+      
+      // Combine with dash
+      if (letters.length >= 3 && numbers.length > 0) {
+        formattedValue = letters + '-' + numbers;
+      } else if (letters.length > 0) {
+        formattedValue = letters + (numbers.length > 0 ? '-' + numbers : '');
+      } else {
+        formattedValue = cleanValue;
       }
     }
 
@@ -112,7 +134,10 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
     }
 
     setFormData(prev => ({ ...prev, [name]: formattedValue }));
-    
+    if (name === 'total_cost') {
+      setIsCostOverridden(true);
+      setManualTotalCost(value === '' ? '' : parseFloat(value));
+    }
     if (errors[name]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -149,38 +174,48 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
     }));
   };
 
+  const handleServiceTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setServiceType(e.target.value as 'service' | 'package');
+  };
+
+  const handleServiceSelect = (id: string, name: string) => {
+    setSelectedServiceId(id);
+    if (serviceType === 'service') {
+      handleServiceToggle(id);
+    } else {
+      handlePackageToggle(id);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setFormError(null);
     if (validate()) {
       try {
         setIsSubmitting(true);
-        
         const selectedServiceNames = formData.selectedServices.map(id => {
           const service = services.find(s => s.id === id);
           return service?.name || '';
         });
-
         const selectedPackageNames = formData.selectedPackages.map(id => {
           const pkg = packages.find(p => p.id === id);
           return pkg?.name || '';
         });
-
         const allServiceNames = [...selectedServiceNames, ...selectedPackageNames];
-        
         await addCar({
           plate: formData.plate,
           model: formData.model,
           size: formData.size,
           status: formData.status,
-          phone: formData.phone || 'Not provided',
+          phone: formData.phone.trim() ? formData.phone : '',
           crew: formData.crew,
           service: allServiceNames.join(', '),
           services: [...formData.selectedServices, ...formData.selectedPackages],
-          total_cost: totalCost,
+          total_cost: manualTotalCost !== '' ? Number(manualTotalCost) : totalCost,
         });
         onComplete();
       } catch (error) {
+        setFormError('Failed to add vehicle. Please try again or contact support.');
         console.error('Error adding car:', error);
       } finally {
         setIsSubmitting(false);
@@ -189,285 +224,186 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <h2 className="text-xl font-bold text-white">Add New Vehicle</h2>
-      
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <div>
-          <label htmlFor="plate" className="block text-sm font-medium text-gray-300 mb-1">
-            License Plate *
-          </label>
-          <input
-            type="text"
-            id="plate"
-            name="plate"
-            value={formData.plate}
-            onChange={handleChange}
-            placeholder="e.g., ABC-1234"
-            className={`block w-full rounded-md shadow-sm sm:text-sm p-2 bg-gray-900 border ${
-              errors.plate ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-700 focus:ring-blue-500 focus:border-blue-500'
-            } text-white placeholder-gray-400`}
-            disabled={isSubmitting}
-            maxLength={8}
-          />
-          {errors.plate && <p className="mt-1 text-sm text-red-400">{errors.plate}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="model" className="block text-sm font-medium text-gray-300 mb-1">
-            Car Model *
-          </label>
-          <input
-            type="text"
-            id="model"
-            name="model"
-            value={formData.model}
-            onChange={handleChange}
-            placeholder="e.g., Toyota Vios"
-            className={`block w-full rounded-md shadow-sm sm:text-sm p-2 bg-gray-900 border ${
-              errors.model ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-700 focus:ring-blue-500 focus:border-blue-500'
-            } text-white placeholder-gray-400`}
-            disabled={isSubmitting}
-          />
-          {errors.model && <p className="mt-1 text-sm text-red-400">{errors.model}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-1">
-            Phone Number <span className="text-gray-500">(optional)</span>
-          </label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            placeholder="e.g., 0912 345 6789"
-            className={`block w-full rounded-md shadow-sm sm:text-sm p-2 bg-gray-900 border ${
-              errors.phone ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-700 focus:ring-blue-500 focus:border-blue-500'
-            } text-white placeholder-gray-400`}
-            disabled={isSubmitting}
-            maxLength={13}
-          />
-          {errors.phone && <p className="mt-1 text-sm text-red-400">{errors.phone}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="size" className="block text-sm font-medium text-gray-300 mb-1">
-            Car Size
-          </label>
-          <select
-            id="size"
-            name="size"
-            value={formData.size}
-            onChange={handleChange}
-            className="block w-full rounded-md shadow-sm sm:text-sm p-2 bg-gray-900 border border-gray-700 text-white focus:ring-blue-500 focus:border-blue-500"
-            disabled={isSubmitting}
-          >
-            {CAR_SIZES.map(size => (
-              <option key={size.value} value={size.value}>
-                {size.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-gray-300 mb-1">
-            Services *
-          </label>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsServicesOpen(!isServicesOpen)}
-              className={`w-full text-left p-2 bg-gray-900 border ${
-                errors.services ? 'border-red-500' : 'border-gray-700'
-              } rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500`}
-            >
-              {formData.selectedServices.length === 0 ? (
-                <span className="text-gray-400">Select services...</span>
-              ) : (
-                <span>{formData.selectedServices.length} services selected</span>
-              )}
-            </button>
-            
-            {isServicesOpen && (
-              <div className="absolute z-10 w-full mt-1 bg-gray-900 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
-                {services.map(service => {
-                  const pricing = service.pricing as SizePricing;
-                  const price = pricing?.[formData.size as keyof SizePricing] || service.price;
-                  return (
-                    <div
-                      key={service.id}
-                      className="p-2 hover:bg-gray-800 cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={formData.selectedServices.includes(service.id)}
-                            onChange={() => handleServiceToggle(service.id)}
-                            className="h-4 w-4 text-blue-600 bg-gray-900 border-gray-700 rounded focus:ring-blue-500"
-                          />
-                          <div className="ml-2">
-                            <span className="text-white">{service.name}</span>
-                            <div className="text-sm text-gray-400">₱{price.toLocaleString()}</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="bg-surface-light dark:bg-surface-dark p-6 rounded-lg shadow-sm border border-border-light dark:border-border-dark">
+        {formError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-2">
+            {formError}
           </div>
-        </div>
-
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-gray-300 mb-1">
-            Service Packages
-          </label>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsPackagesOpen(!isPackagesOpen)}
-              className="w-full text-left p-2 bg-gray-900 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {formData.selectedPackages.length === 0 ? (
-                <span className="text-gray-400">Select packages...</span>
-              ) : (
-                <span>{formData.selectedPackages.length} packages selected</span>
-              )}
-            </button>
-            
-            {isPackagesOpen && (
-              <div className="absolute z-10 w-full mt-1 bg-gray-900 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
-                {packages.map(pkg => {
-                  const price = pkg.pricing[formData.size as keyof SizePricing];
-                  return (
-                    <div
-                      key={pkg.id}
-                      className="p-2 hover:bg-gray-800 cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={formData.selectedPackages.includes(pkg.id)}
-                            onChange={() => handlePackageToggle(pkg.id)}
-                            className="h-4 w-4 text-blue-600 bg-gray-900 border-gray-700 rounded focus:ring-blue-500"
-                          />
-                          <div className="ml-2">
-                            <span className="text-white">{pkg.name}</span>
-                            <div className="text-sm text-gray-400">₱{price.toLocaleString()}</div>
-                            {pkg.description && (
-                              <div className="text-xs text-gray-500">{pkg.description}</div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-gray-300 mb-1">
-            Assign Crew <span className="text-gray-500">(optional)</span>
-          </label>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsCrewOpen(!isCrewOpen)}
-              className="w-full text-left p-2 bg-gray-900 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {formData.crew.length === 0 ? (
-                <span className="text-gray-400">Select crew members...</span>
-              ) : (
-                <span>{formData.crew.length} crew members selected</span>
-              )}
-            </button>
-            
-            {isCrewOpen && (
-              <div className="absolute z-10 w-full mt-1 bg-gray-900 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto">
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Column 1: Plate, Model, Size */}
+          <div className="space-y-6">
+            <div>
+              <label htmlFor="plate" className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">
+                License Plate
+              </label>
+              <input
+                type="text"
+                id="plate"
+                name="plate"
+                value={formData.plate}
+                onChange={handleChange}
+                className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3 uppercase"
+                placeholder="LLL-NNNN"
+              />
+            </div>
+            <div>
+              <label htmlFor="model" className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">
+                Car Model
+              </label>
+              <input
+                type="text"
+                id="model"
+                name="model"
+                value={formData.model}
+                onChange={handleChange}
+                className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3"
+                placeholder="e.g., Toyota Vios"
+              />
+            </div>
+            <div>
+              <label htmlFor="size" className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">
+                Car Size
+              </label>
+              <select
+                id="size"
+                name="size"
+                value={formData.size}
+                onChange={handleChange}
+                className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3"
+              >
+                {CAR_SIZES.map(size => (
+                  <option key={size.value} value={size.value}>
+                    {size.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+             <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">
+                Phone Number (Optional)
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3"
+                placeholder="0912 345 6789"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">
+                Assign Crew
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-32 overflow-y-auto pr-2 rounded-md bg-background-light dark:bg-gray-900/50 p-2 border border-border-light dark:border-border-dark">
                 {crews.map(member => (
-                  <div
-                    key={member.id}
-                    className="p-2 hover:bg-gray-800 cursor-pointer flex items-center"
-                    onClick={() => handleCrewToggle(member.id)}
-                  >
+                  <label key={member.id} className="flex items-center cursor-pointer p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-800">
                     <input
                       type="checkbox"
                       checked={formData.crew.includes(member.id)}
-                      onChange={() => {}}
-                      className="h-4 w-4 text-blue-600 bg-gray-900 border-gray-700 rounded focus:ring-blue-500"
+                      onChange={() => handleCrewToggle(member.id)}
+                      className="form-checkbox h-4 w-4 text-brand-blue bg-surface-light dark:bg-surface-dark border-border-light dark:border-border-dark rounded focus:ring-brand-blue"
                     />
-                    <span className="ml-2 text-white">{member.name}</span>
-                  </div>
+                    <span className="ml-2 text-sm text-text-primary-light dark:text-text-primary-dark">{member.name}</span>
+                  </label>
                 ))}
               </div>
-            )}
-          </div>
-        </div>
-
-        <div className="sm:col-span-2">
-          <div className="bg-gray-900 rounded-lg p-4 border border-gray-800">
-            <div className="flex justify-between items-center">
-              <span className="text-lg font-medium text-gray-300">Selected Items:</span>
             </div>
-            <div className="mt-2 space-y-2">
-              {formData.selectedServices.map(serviceId => {
-                const service = services.find(s => s.id === serviceId);
-                const pricing = service?.pricing as SizePricing;
-                const price = pricing?.[formData.size as keyof SizePricing] || service?.price || 0;
-                return service ? (
-                  <div key={service.id} className="flex justify-between text-sm">
-                    <span className="text-gray-400">{service.name}</span>
-                    <span className="text-white">₱{price.toLocaleString()}</span>
-                  </div>
-                ) : null;
-              })}
-              {formData.selectedPackages.map(packageId => {
-                const pkg = packages.find(p => p.id === packageId);
-                const price = pkg?.pricing[formData.size as keyof SizePricing] || 0;
-                return pkg ? (
-                  <div key={pkg.id} className="flex justify-between text-sm">
-                    <span className="text-gray-400">{pkg.name} (Package)</span>
-                    <span className="text-white">₱{price.toLocaleString()}</span>
-                  </div>
-                ) : null;
-              })}
-              <div className="pt-2 border-t border-gray-700 flex justify-between items-center">
-                <span className="text-lg font-medium text-gray-300">Total:</span>
-                <span className="text-2xl font-bold text-blue-500">₱{totalCost.toLocaleString()}</span>
+          </div>
+
+          {/* Column 2: Service/Package Selection */}
+          <div className="space-y-6">
+            <div>
+              <fieldset>
+                <legend className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">Service Type</legend>
+                <div className="flex gap-4">
+                  <label className="flex items-center">
+                    <input type="radio" name="serviceOrPackage" value="service" checked={serviceType === 'service'} onChange={handleServiceTypeChange} className="form-radio h-4 w-4 text-brand-blue bg-surface-light dark:bg-surface-dark border-border-light dark:border-border-dark focus:ring-brand-blue" />
+                    <span className="ml-2 text-sm text-text-primary-light dark:text-text-primary-dark">Service</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input type="radio" name="serviceOrPackage" value="package" checked={serviceType === 'package'} onChange={handleServiceTypeChange} className="form-radio h-4 w-4 text-brand-blue bg-surface-light dark:bg-surface-dark border-border-light dark:border-border-dark focus:ring-brand-blue" />
+                    <span className="ml-2 text-sm text-text-primary-light dark:text-text-primary-dark">Package</span>
+                  </label>
+                </div>
+              </fieldset>
+            </div>
+            
+            <div className="max-h-60 overflow-y-auto pr-2 space-y-2">
+              <label className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1 capitalize">
+                {serviceType}s
+              </label>
+              {
+                (serviceType === 'service' ? services : packages).map(item => {
+                  const isSelected = serviceType === 'service'
+                    ? formData.selectedServices.includes(item.id)
+                    : formData.selectedPackages.includes(item.id);
+                  return (
+                    <div
+                      key={item.id}
+                      className={`p-3 rounded-lg border cursor-pointer transition-colors flex justify-between items-center ${isSelected ? 'bg-brand-blue/10 border-brand-blue ring-2 ring-brand-blue' : 'bg-background-light dark:bg-gray-800/50 border-border-light dark:border-border-dark hover:border-gray-400 dark:hover:border-gray-500'}`}
+                      onClick={() => handleServiceSelect(item.id, item.name)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-text-primary-light dark:text-text-primary-dark">{item.name}</span>
+                        {isSelected && (
+                          <span className="text-green-600 text-lg font-bold ml-2">✓</span>
+                        )}
+                      </div>
+                      <span className="text-sm font-bold text-green-500">
+                        ₱{item.pricing[formData.size] || 'N/A'}
+                      </span>
+                    </div>
+                  );
+                })
+              }
+            </div>
+            <div className="pt-4 border-t border-border-light dark:border-border-dark">
+              <label htmlFor="add-total_cost" className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">
+                Total Cost (Manual Override)
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary-light dark:text-text-secondary-dark">₱</span>
+                <input
+                  type="number"
+                  id="add-total_cost"
+                  name="total_cost"
+                  value={manualTotalCost}
+                  onChange={handleChange}
+                  className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-2 pl-8"
+                  placeholder="0.00"
+                  disabled={isSubmitting}
+                />
               </div>
+              <p className="mt-1 text-xs text-text-secondary-light dark:text-text-secondary-dark">
+                Automatically calculated cost is ₱{totalCost.toLocaleString()}. Editing this field will override it.
+              </p>
             </div>
           </div>
-          {errors.services && <p className="mt-1 text-sm text-red-400">{errors.services}</p>}
         </div>
-      </div>
 
-      <div className="flex justify-end space-x-3">
-        <button
-          type="button"
-          onClick={onComplete}
-          className="inline-flex items-center px-4 py-2 border border-gray-700 shadow-sm text-sm font-medium rounded-md text-gray-300 bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          disabled={isSubmitting}
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Adding...' : 'Add Vehicle'}
-        </button>
-      </div>
-    </form>
+        <div className="mt-8 border-t border-border-light dark:border-border-dark pt-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-text-secondary-light dark:text-text-secondary-dark">Total</p>
+              <p className="text-3xl font-bold text-brand-blue">
+                ₱{totalCost.toLocaleString()}
+              </p>
+            </div>
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-brand-blue hover:bg-brand-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-light dark:focus:ring-offset-surface-dark focus:ring-brand-blue"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Adding...' : 'Add to Queue'}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
   );
 };
 
