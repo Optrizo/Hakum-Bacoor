@@ -4,6 +4,9 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      screens: {
+        'xs': '475px',
+      },
       colors: {
         'brand-dark-blue': '#052699',
         'brand-blue': '#116AF8',
@@ -15,12 +18,12 @@ export default {
         
         // Semantic colors for light/dark modes
         background: {
-          light: '#F1F1F1', // brand-white
+          light: '#F7F9FC', // Soft, off-white background
           dark: '#0A0A0A',   // brand-black
         },
         surface: {
-          light: '#FFFFFF',
-          dark: '#1A1A1A', // A slightly lighter black for cards
+          light: '#FFFFFF', // Clean white for cards/surfaces
+          dark: '#1A1A1A', 
         },
         primary: {
           DEFAULT: '#116AF8', // brand-blue
@@ -33,12 +36,12 @@ export default {
             dark: '#F1F1F1',   // brand-white
           },
           secondary: {
-            light: '#5A5A5A',
-            dark: '#878EA0', // brand-gray
+            light: '#6B7280', // A slightly darker gray for better contrast
+            dark: '#878EA0', 
           }
         },
         border: {
-          light: '#DCE3EB', // brand-light-gray
+          light: '#E5E7EB', // A neutral gray that works well with the new background
           dark: '#3A3A3A',
         }
       }

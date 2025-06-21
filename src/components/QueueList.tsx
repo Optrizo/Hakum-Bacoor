@@ -216,76 +216,82 @@ const QueueList: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-red-900/10 border border-red-900/20 rounded-lg p-4 flex items-start">
-        <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-        <div>
-          <h3 className="text-sm font-medium text-red-400">Error loading queue</h3>
-          <p className="mt-1 text-sm text-red-300">{error}</p>
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start">
+        <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
+        <div className="flex-1">
+          <h3 className="text-sm font-medium text-red-600 dark:text-red-400">Error loading queue</h3>
+          <p className="mt-1 text-sm text-red-500 dark:text-red-300">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-2 text-xs bg-red-100 dark:bg-red-800 text-red-600 dark:text-red-300 px-2 py-1 rounded hover:bg-red-200 dark:hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <div className="bg-surface-light dark:bg-surface-dark p-4 rounded-lg shadow-lg border border-border-light dark:border-border-dark">
-        <div className="flex flex-col gap-4">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
+      <div className="bg-surface-light dark:bg-surface-dark p-3 sm:p-4 rounded-lg shadow-lg border border-border-light dark:border-border-dark">
+        <div className="flex flex-col gap-3 sm:gap-4">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-text-secondary-light dark:text-text-secondary-dark" />
+              <Search className="h-4 w-4 sm:h-5 sm:w-5 text-text-secondary-light dark:text-text-secondary-dark" />
             </div>
             <input
               type="text"
               placeholder="Search plate, model, service or phone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-md leading-5 placeholder-text-secondary-light dark:placeholder-text-secondary-dark focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue text-sm"
+              className="block w-full pl-9 sm:pl-10 pr-3 py-2.5 sm:py-2 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-lg leading-5 placeholder-text-secondary-light dark:placeholder-text-secondary-dark focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue text-sm transition-all duration-200"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="relative">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-text-secondary-light dark:text-text-secondary-dark flex-shrink-0" />
+            <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-text-secondary-light dark:text-text-secondary-dark flex-shrink-0" />
                 <button
                   onClick={() => setShowCalendar(!showCalendar)}
                   onKeyDown={handleKeyDown}
-                  className="block w-full pl-3 pr-10 py-2 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-md focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue text-sm text-left flex items-center justify-between"
+                  className="block w-full pl-3 pr-10 py-2.5 sm:py-2 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue text-sm text-left flex items-center justify-between transition-all duration-200"
                   aria-label="Select date"
                   aria-expanded={showCalendar}
                 >
-                  <span className="text-text-primary-light dark:text-text-primary-dark">
+                  <span className="text-text-primary-light dark:text-text-primary-dark truncate">
                     {dateFilter === 'today' ? 'Today' : 
                      dateFilter === 'all' ? 'All Time' : 
                      selectedDate ? formatDisplayDate(selectedDate) : 'Choose a Day'}
                   </span>
-                  <ChevronRight className={`h-5 w-5 transition-transform text-text-secondary-light dark:text-text-secondary-dark ${showCalendar ? 'rotate-90' : ''}`} />
+                  <ChevronRight className={`h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-200 text-text-secondary-light dark:text-text-secondary-dark ${showCalendar ? 'rotate-90' : ''}`} />
                 </button>
               </div>
 
               {showCalendar && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg shadow-xl z-50 p-4" ref={calendarRef}>
-                  <div className="flex items-center justify-between mb-4">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg shadow-xl z-50 p-3 sm:p-4 max-h-96 overflow-y-auto" ref={calendarRef}>
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
                     <button
                       onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
-                      className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                      className="p-1.5 sm:p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
                       aria-label="Previous month"
                     >
-                      <ChevronLeft className="h-5 w-5 text-text-secondary-light dark:text-text-secondary-dark" />
+                      <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 text-text-secondary-light dark:text-text-secondary-dark" />
                     </button>
                     <h3 className="text-sm font-medium text-text-primary-light dark:text-text-primary-dark">
                       {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                     </h3>
                     <button
                       onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
-                      className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                      className="p-1.5 sm:p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
                       aria-label="Next month"
                     >
-                      <ChevronRight className="h-5 w-5 text-text-secondary-light dark:text-text-secondary-dark" />
+                      <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-text-secondary-light dark:text-text-secondary-dark" />
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-7 gap-1 mb-4 text-center">
+                  <div className="grid grid-cols-7 gap-1 mb-3 sm:mb-4 text-center">
                     {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
                       <div key={day} className="h-8 w-8 flex items-center justify-center text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark">
                         {day}
@@ -301,7 +307,7 @@ const QueueList: React.FC = () => {
                         onClick={goToToday}
                         className="px-2 py-1 text-xs bg-brand-blue hover:bg-brand-dark-blue text-white rounded transition-colors"
                       >
-                        Go to Today
+                        Today
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-1">
@@ -330,7 +336,7 @@ const QueueList: React.FC = () => {
                         className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
                         aria-label="Clear selection"
                       >
-                        <X className="h-5 w-5 text-text-secondary-light dark:text-text-secondary-dark" />
+                        <X className="h-4 w-4 sm:h-5 sm:w-5 text-text-secondary-light dark:text-text-secondary-dark" />
                       </button>
                     </div>
                   )}
@@ -339,11 +345,11 @@ const QueueList: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <Filter className="h-5 w-5 text-text-secondary-light dark:text-text-secondary-dark flex-shrink-0" />
+              <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-text-secondary-light dark:text-text-secondary-dark flex-shrink-0" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as ServiceStatus | 'all')}
-                className="block w-full pl-3 pr-10 py-2 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-primary-light dark:text-text-primary-dark rounded-md focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue text-sm"
+                className="block w-full pl-3 pr-10 py-2.5 sm:py-2 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-primary-light dark:text-text-primary-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue text-sm transition-all duration-200"
               >
                 <option value="all">All Statuses</option>
                 <option value="waiting">Waiting</option>
@@ -357,7 +363,7 @@ const QueueList: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         {[
           { title: 'Waiting', count: waitingCount, status: 'waiting', color: 'blue' },
           { title: 'In Progress', count: inProgressCount, status: 'in-progress', color: 'sky' },
@@ -368,22 +374,24 @@ const QueueList: React.FC = () => {
         ].map(item => (
           <div 
             key={item.title}
-            className={`bg-surface-light dark:bg-surface-dark rounded-lg p-4 border border-border-light dark:border-border-dark cursor-pointer hover:border-brand-blue dark:hover:border-brand-blue transition-colors ${item.title === 'Total' ? 'col-span-2 md:col-span-1' : ''}`}
+            className={`bg-surface-light dark:bg-surface-dark rounded-lg p-3 sm:p-4 border border-border-light dark:border-border-dark cursor-pointer hover:border-brand-blue dark:hover:border-brand-blue transition-all duration-200 transform hover:scale-105 ${
+              item.title === 'Total' ? 'col-span-2 sm:col-span-1' : ''
+            }`}
             onClick={() => setStatusFilter(item.status as any)}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark">
+          <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark truncate">
                   {item.title === 'Total' 
                     ? (dateFilter === 'today' ? 'Total Today' : dateFilter === 'custom' ? 'Total Selected Day' : 'Total All Time')
                     : item.title}
                 </p>
-                <p className="text-2xl font-bold text-text-primary-light dark:text-text-primary-dark">{item.count}</p>
+                <p className="text-lg sm:text-2xl font-bold text-text-primary-light dark:text-text-primary-dark">{item.count}</p>
               </div>
-              <div className={`bg-${item.color}-500/10 rounded-full p-2`}>
-                <div className={`h-6 w-6 rounded-full bg-${item.color}-500 flex items-center justify-center text-xs font-bold text-white`}>
-                  {item.count}
-                </div>
+              <div className={`bg-${item.color}-500/10 rounded-full p-1.5 sm:p-2 flex-shrink-0`}>
+                <div className={`h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-${item.color}-500 flex items-center justify-center text-xs font-bold text-white`}>
+                  {item.count > 99 ? '99+' : item.count}
+            </div>
               </div>
             </div>
           </div>
@@ -391,22 +399,30 @@ const QueueList: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="bg-surface-light dark:bg-surface-dark p-8 text-center rounded-lg border border-border-light dark:border-border-dark">
+        <div className="bg-surface-light dark:bg-surface-dark p-6 sm:p-8 text-center rounded-lg border border-border-light dark:border-border-dark">
           <div className="animate-pulse flex flex-col items-center">
-            <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full mb-4"></div>
+            <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full mb-4 animate-spin"></div>
             <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
             <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
           </div>
         </div>
       ) : filteredCars.length > 0 ? (
-        <div className="space-y-3 md:space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {filteredCars.map(car => (
             <QueueItem key={car.id} car={car} />
           ))}
         </div>
       ) : (
-        <div className="bg-surface-light dark:bg-surface-dark p-8 text-center rounded-lg border border-border-light dark:border-border-dark">
-          <p className="text-text-secondary-light dark:text-text-secondary-dark">No vehicles match the criteria</p>
+        <div className="bg-surface-light dark:bg-surface-dark p-6 sm:p-8 text-center rounded-lg border border-border-light dark:border-border-dark">
+          <div className="flex flex-col items-center">
+            <Search className="h-12 w-12 text-text-secondary-light dark:text-text-secondary-dark mb-4 opacity-50" />
+            <p className="text-text-secondary-light dark:text-text-secondary-dark text-sm sm:text-base">
+              No vehicles match the current criteria
+            </p>
+            <p className="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-1">
+              Try adjusting your search or filters
+            </p>
+          </div>
         </div>
       )}
     </div>
