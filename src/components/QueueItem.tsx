@@ -16,15 +16,30 @@ const QueueItem: React.FC<QueueItemProps> = ({ car }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAssigningCrew, setIsAssigningCrew] = useState(false);
+  const [showCrewWarning, setShowCrewWarning] = useState(false);
   const [selectedCrewIds, setSelectedCrewIds] = useState<string[]>(car.crew || []);
 
+  const handleStartServiceClick = () => {
+    if (!car.crew || car.crew.length === 0) {
+      setShowCrewWarning(true);
+      setIsAssigningCrew(true);
+    } else {
+      handleQuickAction('in-progress');
+    }
+  };
+
   const handleQuickAction = async (newStatus: Car['status']) => {
+    // Prevent status change if crew warning is active for another action
+    if (showCrewWarning && newStatus === 'in-progress') {
+      return;
+    }
     try {
       setIsUpdating(true);
       await updateCar(car.id, { 
         status: newStatus,
         updated_at: new Date().toISOString()
       });
+      setIsAssigningCrew(false);
     } catch (error) {
       console.error('Error updating status:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -71,6 +86,14 @@ const QueueItem: React.FC<QueueItemProps> = ({ car }) => {
         crew: selectedCrewIds,
         updated_at: new Date().toISOString()
       });
+      
+      if (showCrewWarning) {
+        if (selectedCrewIds.length > 0) {
+          await handleQuickAction('in-progress');
+        }
+        setShowCrewWarning(false);
+      }
+
       setIsAssigningCrew(false);
     } catch (error) {
       console.error('Error assigning crew:', error);
@@ -78,6 +101,12 @@ const QueueItem: React.FC<QueueItemProps> = ({ car }) => {
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const cancelCrewAssignment = () => {
+    setIsAssigningCrew(false);
+    setShowCrewWarning(false);
+    setSelectedCrewIds(car.crew || []);
   };
 
   if (isEditing) {
@@ -169,6 +198,13 @@ const QueueItem: React.FC<QueueItemProps> = ({ car }) => {
               <label className="block text-sm font-medium text-text-primary-light dark:text-text-primary-dark">
                 Select Crew Members
               </label>
+              {showCrewWarning && (
+                <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 rounded-md">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    <strong>Action Required:</strong> Please assign at least one crew member before starting the service.
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-32 overflow-y-auto pr-2">
                 {crews.map(member => (
                   <label key={member.id} className="flex items-center cursor-pointer p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
@@ -184,7 +220,7 @@ const QueueItem: React.FC<QueueItemProps> = ({ car }) => {
               </div>
               <div className="flex flex-col sm:flex-row justify-end gap-2 mt-3">
                 <button
-                  onClick={() => setIsAssigningCrew(false)}
+                  onClick={cancelCrewAssignment}
                   className="inline-flex items-center justify-center px-3 py-1.5 border border-border-light dark:border-border-dark shadow-sm text-xs font-medium rounded-md text-text-primary-light dark:text-text-primary-dark bg-surface-light dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-light dark:focus:ring-offset-surface-dark focus:ring-brand-blue transition-colors"
                 >
                   Cancel
@@ -209,7 +245,7 @@ const QueueItem: React.FC<QueueItemProps> = ({ car }) => {
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               {car.status === 'waiting' && (
                 <button
-                  onClick={() => handleQuickAction('in-progress')}
+                  onClick={handleStartServiceClick}
                   disabled={isUpdating}
                   className="inline-flex items-center justify-center px-4 py-2.5 sm:py-2 rounded-lg text-sm font-semibold bg-brand-blue text-white hover:bg-brand-dark-blue transition-all duration-200 disabled:opacity-50 transform hover:scale-105 active:scale-95"
                 >

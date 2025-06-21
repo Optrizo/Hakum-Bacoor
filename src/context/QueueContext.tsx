@@ -265,7 +265,17 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       if (error) {
         console.error('Supabase error adding car:', error);
-        throw error;
+        
+        // Handle specific error cases
+        if (error.code === '23505' && error.message.includes('plate')) {
+          throw new Error('A vehicle with this license plate already exists in the queue.');
+        } else if (error.code === '23502') {
+          throw new Error('Please fill in all required fields.');
+        } else if (error.code === '23514') {
+          throw new Error('Invalid data provided. Please check your input.');
+        } else {
+          throw new Error(`Failed to add vehicle: ${error.message}`);
+        }
       }
 
       if (data) {
@@ -274,7 +284,11 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } catch (err) {
       console.error('Error in addCar:', err);
       // Re-throw the error so the UI component can handle it
-      throw new Error('Failed to add new vehicle.');
+      if (err instanceof Error) {
+        throw err;
+      } else {
+        throw new Error('Failed to add new vehicle.');
+      }
     }
   };
 

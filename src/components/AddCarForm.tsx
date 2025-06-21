@@ -181,8 +181,22 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
       });
       onComplete();
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'An unknown error occurred. Please try again.');
       console.error('Error adding car:', error);
+      
+      // Handle specific error messages
+      if (error instanceof Error) {
+        if (error.message.includes('license plate already exists')) {
+          setFormError('A vehicle with this license plate is already in the queue. You can add the same vehicle multiple times for returning customers.');
+        } else if (error.message.includes('required fields')) {
+          setFormError('Please fill in all required fields marked with an asterisk (*).');
+        } else if (error.message.includes('Invalid data')) {
+          setFormError('Please check your input and try again.');
+        } else {
+          setFormError(error.message);
+        }
+      } else {
+        setFormError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -19,6 +19,7 @@ const ServicesPage: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [editingPackage, setEditingPackage] = useState<ServicePackage | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   
   // Local form state - completely isolated from real-time updates
   const serviceFormStateRef = useRef({ name: '', description: '', pricing: { small: 0, medium: 0, large: 0, extra_large: 0 } });
@@ -42,6 +43,7 @@ const ServicesPage: React.FC = () => {
     });
     setEditingService(null);
     setShowAddForm(false);
+    setErrors({});
   };
 
   const resetPackageForm = () => {
@@ -53,15 +55,41 @@ const ServicesPage: React.FC = () => {
     });
     setEditingPackage(null);
     setShowAddForm(false);
+    setErrors({});
+  };
+
+  const validateService = () => {
+    const newErrors: Record<string, string> = {};
+    if (!serviceFormData.name.trim()) {
+      newErrors.name = 'Service name is required.';
+    }
+    const hasAtLeastOnePrice = Object.values(serviceFormData.pricing).some(price => price > 0);
+    if (!hasAtLeastOnePrice) {
+      newErrors.pricing = 'At least one price for a car size must be set.';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validatePackage = () => {
+    const newErrors: Record<string, string> = {};
+    if (!packageFormData.name.trim()) {
+      newErrors.name = 'Package name is required.';
+    }
+    if (packageFormData.service_ids.length === 0) {
+      newErrors.services = 'At least one service must be included in a package.';
+    }
+    const hasAtLeastOnePrice = Object.values(packageFormData.pricing).some(price => price > 0);
+    if (!hasAtLeastOnePrice) {
+      newErrors.pricing = 'At least one price for a car size must be set.';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleServiceSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!serviceFormData.name.trim()) {
-      alert('Service name is required');
-      return;
-    }
+    if (!validateService()) return;
 
     try {
       const serviceData = {
@@ -81,22 +109,13 @@ const ServicesPage: React.FC = () => {
     } catch (error) {
       console.error('Error saving service:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`Failed to save service: ${errorMessage}. Please try again.`);
+      setErrors({ form: `Failed to save service: ${errorMessage}. Please try again.` });
     }
   };
 
   const handlePackageSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!packageFormData.name.trim()) {
-      alert('Package name is required');
-      return;
-    }
-
-    if (packageFormData.service_ids.length === 0) {
-      alert('Please select at least one service for the package');
-      return;
-    }
+    if (!validatePackage()) return;
 
     try {
       const packageData = {
@@ -117,7 +136,7 @@ const ServicesPage: React.FC = () => {
     } catch (error) {
       console.error('Error saving package:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`Failed to save package: ${errorMessage}. Please try again.`);
+      setErrors({ form: `Failed to save package: ${errorMessage}. Please try again.` });
     }
   };
 
@@ -130,6 +149,7 @@ const ServicesPage: React.FC = () => {
     });
     setActiveTab('services');
     setShowAddForm(false);
+    setErrors({});
   };
 
   const handleEditPackage = (pkg: ServicePackage) => {
@@ -142,6 +162,7 @@ const ServicesPage: React.FC = () => {
     });
     setActiveTab('packages');
     setShowAddForm(false);
+    setErrors({});
   };
 
   const handleDeleteService = async (id: string) => {
@@ -207,25 +228,27 @@ const ServicesPage: React.FC = () => {
       <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-4">
         {editingService ? 'Edit Service' : 'Add New Service'}
       </h3>
+      {errors.form && <p className="text-sm text-red-500 mb-4">{errors.form}</p>}
       <div className="space-y-4">
         <div>
           <label htmlFor="service-name" className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">
-            Service Name *
+            Service Name <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             id="service-name"
             value={serviceFormData.name}
             onChange={(e) => setServiceFormData(prev => ({...prev, name: e.target.value}))}
-            className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3"
+            className={`block w-full rounded-md bg-background-light dark:bg-background-dark border shadow-sm focus:ring-brand-blue focus:border-brand-blue sm:text-sm p-3 ${errors.name ? 'border-red-500' : 'border-border-light dark:border-border-dark'}`}
             placeholder="e.g., Premium Wash"
             required
           />
+          {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
         </div>
         
         <div>
           <label htmlFor="service-description" className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">
-            Description <span className="text-gray-500">(Optional)</span>
+            Description <span className="text-gray-500 text-xs">(Optional)</span>
           </label>
           <textarea
             id="service-description"
@@ -239,7 +262,7 @@ const ServicesPage: React.FC = () => {
 
         <div>
           <label className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">
-            Pricing by Car Size *
+            Pricing by Car Size <span className="text-red-500">*</span>
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {CAR_SIZES.map(size => (
@@ -252,13 +275,15 @@ const ServicesPage: React.FC = () => {
                     id={`service-price-${size.value}`}
                     value={serviceFormData.pricing[size.value] || ''}
                     onChange={(e) => handleServicePricingChange(size.value, e)}
-                    className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3 pl-8"
+                    className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3 pl-8 text-right"
                     placeholder="0"
+                    min="0"
                   />
                 </div>
               </div>
             ))}
           </div>
+          {errors.pricing && <p className="text-xs text-red-500 mt-2">{errors.pricing}</p>}
         </div>
       </div>
       <div className="flex justify-end space-x-3 mt-6">
@@ -284,55 +309,64 @@ const ServicesPage: React.FC = () => {
       <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-4">
         {editingPackage ? 'Edit Package' : 'Add New Package'}
       </h3>
+      {errors.form && <p className="text-sm text-red-500 mb-4">{errors.form}</p>}
       <div className="space-y-4">
         <div>
           <label htmlFor="package-name" className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">
-            Package Name *
+            Package Name <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             id="package-name"
             value={packageFormData.name}
-            onChange={(e) => setPackageFormData(prev => ({...prev, name: e.target.value}))}
-            className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3"
-            placeholder="e.g., Full Service Package"
+            onChange={(e) => setPackageFormData(prev => ({ ...prev, name: e.target.value }))}
+            className={`block w-full rounded-md bg-background-light dark:bg-background-dark border shadow-sm focus:ring-brand-blue focus:border-brand-blue sm:text-sm p-3 ${errors.name ? 'border-red-500' : 'border-border-light dark:border-border-dark'}`}
+            placeholder="e.g., Full Service Detail"
             required
           />
+          {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
         </div>
+        
         <div>
           <label htmlFor="package-description" className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">
-            Description <span className="text-gray-500">(Optional)</span>
+            Description <span className="text-gray-500 text-xs">(Optional)</span>
           </label>
           <textarea
             id="package-description"
             value={packageFormData.description}
-            onChange={(e) => setPackageFormData(prev => ({...prev, description: e.target.value}))}
+            onChange={(e) => setPackageFormData(prev => ({ ...prev, description: e.target.value }))}
             className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3"
             rows={3}
-            placeholder="What's included in this package?"
+            placeholder="Briefly describe the package"
           />
         </div>
+
         <div>
           <label className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">
-            Included Services *
+            Included Services <span className="text-red-500">*</span>
           </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-background-light dark:bg-background-dark rounded-md border border-border-light dark:border-border-dark">
+          <div className="max-h-40 overflow-y-auto space-y-2 p-2 border border-border-light dark:border-border-dark rounded-md">
             {services.map(service => (
-              <label key={service.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={packageFormData.service_ids.includes(service.id)}
-                    onChange={() => handleServiceToggle(service.id)}
-                  className="h-4 w-4 rounded bg-background-light dark:bg-gray-700 border-border-light dark:border-border-dark text-brand-blue focus:ring-brand-blue"
-                  />
-                <span className="text-sm text-text-primary-light dark:text-text-primary-dark">{service.name}</span>
+              <div key={service.id} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={`service-checkbox-${service.id}`}
+                  checked={packageFormData.service_ids.includes(service.id)}
+                  onChange={() => handleServiceToggle(service.id)}
+                  className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-brand-blue focus:ring-brand-blue"
+                />
+                <label htmlFor={`service-checkbox-${service.id}`} className="ml-2 text-sm text-text-primary-light dark:text-text-primary-dark">
+                  {service.name}
                 </label>
+              </div>
             ))}
           </div>
+          {errors.services && <p className="text-xs text-red-500 mt-1">{errors.services}</p>}
         </div>
+
         <div>
           <label className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">
-            Package Pricing by Car Size *
+            Pricing by Car Size <span className="text-red-500">*</span>
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {CAR_SIZES.map(size => (
@@ -345,13 +379,15 @@ const ServicesPage: React.FC = () => {
                     id={`package-price-${size.value}`}
                     value={packageFormData.pricing[size.value] || ''}
                     onChange={(e) => handlePackagePricingChange(size.value, e)}
-                    className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3 pl-8"
+                    className="block w-full rounded-md bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark shadow-sm focus:border-brand-blue focus:ring-brand-blue sm:text-sm p-3 pl-8 text-right"
                     placeholder="0"
+                    min="0"
                   />
                 </div>
               </div>
             ))}
           </div>
+          {errors.pricing && <p className="text-xs text-red-500 mt-2">{errors.pricing}</p>}
         </div>
       </div>
       <div className="flex justify-end space-x-3 mt-6">
