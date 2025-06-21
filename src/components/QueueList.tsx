@@ -251,7 +251,7 @@ const QueueList: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="relative">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-text-secondary-light dark:text-text-secondary-dark flex-shrink-0" />
                 <button
                   onClick={() => setShowCalendar(!showCalendar)}
@@ -379,7 +379,7 @@ const QueueList: React.FC = () => {
             }`}
             onClick={() => setStatusFilter(item.status as any)}
           >
-            <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark truncate">
                   {item.title === 'Total' 
@@ -391,7 +391,7 @@ const QueueList: React.FC = () => {
               <div className={`bg-${item.color}-500/10 rounded-full p-1.5 sm:p-2 flex-shrink-0`}>
                 <div className={`h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-${item.color}-500 flex items-center justify-center text-xs font-bold text-white`}>
                   {item.count > 99 ? '99+' : item.count}
-                </div>
+            </div>
               </div>
             </div>
           </div>

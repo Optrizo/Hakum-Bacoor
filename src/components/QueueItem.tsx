@@ -82,19 +82,20 @@ const QueueItem: React.FC<QueueItemProps> = ({ car }) => {
   const handleAssignCrew = async () => {
     try {
       setIsUpdating(true);
-      await updateCar(car.id, { 
+
+      const updates: Partial<Car> = {
         crew: selectedCrewIds,
         updated_at: new Date().toISOString()
-      });
-      
-      if (showCrewWarning) {
-        if (selectedCrewIds.length > 0) {
-          await handleQuickAction('in-progress');
-        }
-        setShowCrewWarning(false);
+      };
+
+      if (car.status === 'waiting' && selectedCrewIds.length > 0) {
+        updates.status = 'in-progress';
       }
 
+      await updateCar(car.id, updates);
+
       setIsAssigningCrew(false);
+      setShowCrewWarning(false);
     } catch (error) {
       console.error('Error assigning crew:', error);
       alert(`Failed to assign crew: ${error instanceof Error ? error.message : 'Unknown error'}`);

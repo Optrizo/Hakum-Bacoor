@@ -27,6 +27,12 @@ const CustomerView: React.FC = () => {
     readyForPayment: todaysCars.filter(car => car.status === 'payment-pending'),
   };
 
+  const maxItems = Math.max(
+    groupedCars.waiting.length,
+    groupedCars.inProgress.length,
+    groupedCars.readyForPayment.length
+  );
+
   const getCrewNames = (crewIds: string[] | undefined) => {
     if (!crewIds || crewIds.length === 0) return [];
     
@@ -36,9 +42,8 @@ const CustomerView: React.FC = () => {
     }).filter(name => name !== 'Unknown');
   };
 
-  const ServiceSection = ({ title, cars, color }: { title: string; cars: Car[]; color:string }) => {
-    const itemCount = cars.length;
-    const isCrowded = itemCount > 5;
+  const ServiceSection = ({ title, cars, color, maxItems }: { title: string; cars: Car[]; color:string; maxItems: number }) => {
+    const isCrowded = maxItems > 5;
 
     return (
       <div className={`bg-surface-light dark:bg-[#1A1A1A] rounded-lg shadow-xl flex flex-col h-full`}>
@@ -47,21 +52,30 @@ const CustomerView: React.FC = () => {
           <span className="bg-text-primary-light dark:bg-white text-background-light dark:text-black text-xl font-bold px-3 py-0.5 rounded-full">{cars.length}</span>
         </div>
         
-        {itemCount > 0 ? (
+        {cars.length > 0 ? (
           <div className="flex-1 overflow-hidden p-2">
             <div className="flex flex-col h-full gap-2">
               {cars.map(car => {
                 const crewNames = getCrewNames(car.crew);
                 return (
                   <div key={car.id} className={`bg-background-light dark:bg-[#2C2C2E] rounded-lg flex justify-between items-center flex-1 min-h-0 ${isCrowded ? 'p-2' : 'p-3'}`}>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <p className={`font-bold tracking-wider text-text-primary-light dark:text-gray-100 ${isCrowded ? 'text-xl' : 'text-2xl'}`}>{car.plate}</p>
-                      <p className={`font-semibold mt-1 ${isCrowded ? 'text-sm text-text-secondary-light dark:text-gray-300' : 'text-base text-text-secondary-light dark:text-gray-300'}`}>{car.model}</p>
-                      <p className={`font-medium text-brand-blue dark:text-brand-cyan ${isCrowded ? 'text-xs' : 'text-sm'}`}>{car.service}</p>
+                      <p className={`font-semibold mt-1 truncate ${isCrowded ? 'text-sm text-text-secondary-light dark:text-gray-300' : 'text-base text-text-secondary-light dark:text-gray-300'}`}>{car.model}</p>
+                      <p 
+                        className={`font-medium text-brand-blue dark:text-brand-cyan truncate ${isCrowded ? 'text-xs' : 'text-sm'}`}
+                        title={car.service}
+                      >
+                        {car.service}
+                      </p>
                       {crewNames.length > 0 && (
                         <div className={`flex items-center gap-1.5 flex-wrap ${isCrowded ? 'mt-1' : 'mt-2'}`}>
                           {crewNames.map((name, idx) => (
-                            <span key={idx} className={`bg-surface-light dark:bg-gray-600 text-text-secondary-light dark:text-white rounded-full font-medium ${isCrowded ? 'text-[10px] px-1.5 py-0' : 'text-xs px-2 py-0.5'}`}>
+                            <span 
+                              key={idx} 
+                              className={`bg-surface-light dark:bg-gray-600 text-text-secondary-light dark:text-white rounded-full font-medium truncate ${isCrowded ? 'text-[10px] px-1.5 py-0' : 'text-xs px-2 py-0.5'}`}
+                              title={name}
+                            >
                               {name}
                             </span>
                           ))}
@@ -112,16 +126,19 @@ const CustomerView: React.FC = () => {
             title="Waiting"
             cars={groupedCars.waiting}
             color="border-brand-blue"
+            maxItems={maxItems}
           />
           <ServiceSection
             title="In Progress"
             cars={groupedCars.inProgress}
             color="border-brand-cyan"
+            maxItems={maxItems}
           />
           <ServiceSection
             title="Ready for Payment"
             cars={groupedCars.readyForPayment}
             color="border-yellow-400"
+            maxItems={maxItems}
           />
         </div>
       </main>
