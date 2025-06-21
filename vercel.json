@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/backup-crew-data",
+      "schedule": "0 16 * * *"
+    }
+  ]
+} 
