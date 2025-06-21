@@ -2,29 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    @apply bg-background-light text-text-primary-light;
-    @apply dark:bg-background-dark dark:text-text-primary-dark;
-    @apply transition-colors duration-300;
-  }
-
-  /* Custom scrollbar styles */
-  ::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    @apply bg-brand-blue rounded-full border-4 border-solid border-transparent bg-clip-content;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-brand-cyan;
-  }
-}
-
 @layer utilities {
   .animate-fadeIn {
     animation: fadeIn 0.3s ease-in-out;

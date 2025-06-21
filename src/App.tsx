@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueueProvider } from './context/QueueContext';
-import { ThemeProvider } from './context/ThemeContext';
 import Layout from './components/Layout';
 import QueueManager from './components/QueueManager';
 import CustomerView from './components/CustomerView';
@@ -11,7 +10,6 @@ import ServicesPage from './components/ServicesPage';
 function App() {
   return (
     <BrowserRouter>
-      <ThemeProvider>
       <QueueProvider>
         <Routes>
           <Route path="/" element={<Layout><QueueManager /></Layout>} />
@@ -20,7 +18,6 @@ function App() {
           <Route path="/services" element={<Layout><ServicesPage /></Layout>} />
         </Routes>
       </QueueProvider>
-      </ThemeProvider>
     </BrowserRouter>
   );
 }

@@ -1,55 +1,91 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import QueueList from './QueueList';
-import { Plus, X } from 'lucide-react';
 import AddCarForm from './AddCarForm';
+import { Plus, X } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 const QueueManager: React.FC = () => {
-  const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [tables, setTables] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [carTest, setCarTest] = useState<{ plate: string; model: string } | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchTables() {
+      // This query fetches the list of tables in the public schema
+      const { data, error } = await supabase.rpc('pg_catalog.pg_tables', { schemaname: 'public' });
+      if (error) {
+        setError(error.message);
+      } else if (data) {
+        setTables(data.map((row: any) => row.tablename));
+      }
+    }
+    fetchTables();
+  }, []);
+
+  useEffect(() => {
+    async function fetchCarTest() {
+      const { data, error } = await supabase.from('cars').select('plate,model').limit(1).single();
+      if (error) {
+        setTestError(error.message);
+      } else if (data) {
+        setCarTest({ plate: data.plate, model: data.model });
+      } else {
+        setTestError('No cars found in database.');
+      }
+    }
+    fetchCarTest();
+  }, []);
 
   return (
-    <div className="flex-1 overflow-y-auto p-2 sm:p-4 lg:p-6 xl:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-4">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold text-brand-blue truncate">Service Queue</h1>
-            <p className="text-sm sm:text-base text-text-secondary-light dark:text-text-secondary-dark mt-1">
-              Manage your auto service queue and track progress
-            </p>
-          </div>
-          <button 
-            onClick={() => setIsAddModalOpen(true)} 
-            className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 sm:py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-brand-blue hover:bg-brand-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-blue transition-all duration-200 transform hover:scale-105 active:scale-95"
-          >
-            <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-            <span className="hidden xs:inline">Add Vehicle</span>
-            <span className="xs:hidden">Add</span>
-          </button>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Service Queue</h1>
+          <p className="text-gray-400">Manage your auto service queue and track progress</p>
         </div>
-
-        <QueueList />
+        
+        <button
+          onClick={() => setShowAddForm(prev => !prev)}
+          className={`mt-4 md:mt-0 flex items-center px-4 py-2 font-medium rounded-md shadow-lg transition-colors ${
+            showAddForm 
+              ? 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700' 
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          {showAddForm ? (
+            <>
+              <X className="h-5 w-5 mr-1" />
+              Cancel
+            </>
+          ) : (
+            <>
+              <Plus className="h-5 w-5 mr-1" />
+              Add Vehicle
+            </>
+          )}
+        </button>
       </div>
 
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center p-2 sm:p-4">
-          <div className="relative bg-surface-light dark:bg-surface-dark rounded-lg shadow-xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 sm:scale-100">
-            <div className="sticky top-0 bg-surface-light dark:bg-surface-dark border-b border-border-light dark:border-border-dark px-4 sm:px-6 py-4 flex justify-between items-center">
-              <h2 className="text-lg sm:text-xl font-semibold text-text-primary-light dark:text-text-primary-dark">
-                Add New Vehicle
-              </h2>
-              <button 
-                onClick={() => setIsAddModalOpen(false)} 
-                className="p-2 rounded-lg text-text-secondary-light dark:text-text-secondary-dark hover:text-text-primary-light dark:hover:text-text-primary-dark hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
-                aria-label="Close modal"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="p-4 sm:p-6">
-              <AddCarForm onComplete={() => setIsAddModalOpen(false)} />
-            </div>
-          </div>
+      {showAddForm && (
+        <div className="bg-black shadow-lg rounded-lg p-6 border-l-4 border-blue-600 animate-fadeIn border border-gray-800">
+          <AddCarForm onComplete={() => setShowAddForm(false)} />
         </div>
       )}
+
+      <QueueList />
+
+      <div style={{ marginTop: 20, padding: 10, border: '1px solid #ccc' }}>
+        <strong>Supabase Connection Test:</strong>
+        {testError ? (
+          <div style={{ color: 'red' }}>Error: {testError}</div>
+        ) : carTest ? (
+          <div>First car in database: {carTest.plate} ({carTest.model})</div>
+        ) : (
+          <div>Loading test car...</div>
+        )}
+      </div>
     </div>
   );
 };

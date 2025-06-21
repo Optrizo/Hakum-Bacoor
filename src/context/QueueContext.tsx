@@ -77,6 +77,7 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }));
       
       setCars(transformedCars);
+      console.log('Cars fetched successfully:', transformedCars.length);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       console.error('Error fetching cars:', err);
@@ -102,6 +103,7 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       
       setServices(data || []);
+      console.log('Services fetched successfully:', (data || []).length);
     } catch (err) {
       console.error('Error fetching services:', err);
     } finally {
@@ -126,6 +128,7 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       
       setCrews(data || []);
+      console.log('Crew members fetched successfully:', (data || []).length);
     } catch (err) {
       console.error('Error fetching crews:', err);
     } finally {
@@ -150,6 +153,7 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       
       setPackages(data || []);
+      console.log('Service packages fetched successfully:', (data || []).length);
     } catch (err) {
       console.error('Error fetching packages:', err);
     } finally {
@@ -258,162 +262,196 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const addCar = async (car: Omit<Car, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      addActiveOperation('car-operation');
+      setError(null);
+      console.log('Adding car:', car);
+      
       const { data, error } = await supabase
         .from('cars')
-        .insert([{ ...car }])
-        .select();
+        .insert([{
+          plate: car.plate,
+          model: car.model,
+          size: car.size,
+          service: car.service,
+          status: car.status,
+          phone: car.phone,
+          crew: car.crew || [],
+          services: car.services || [],
+          total_cost: car.total_cost || 0,
+        }])
+        .select()
+        .single();
 
       if (error) {
         console.error('Supabase error adding car:', error);
-        
-        // Handle specific error cases
-        if (error.code === '23505' && error.message.includes('plate')) {
-          throw new Error('A vehicle with this license plate already exists in the queue.');
-        } else if (error.code === '23502') {
-          throw new Error('Please fill in all required fields.');
-        } else if (error.code === '23514') {
-          throw new Error('Invalid data provided. Please check your input.');
-        } else {
-          throw new Error(`Failed to add vehicle: ${error.message}`);
-        }
+        throw error;
       }
-
-      if (data) {
-        // No need for manual state update, subscription will trigger refetch
-      }
+      
+      console.log('Car added successfully:', data);
     } catch (err) {
-      console.error('Error in addCar:', err);
-      // Re-throw the error so the UI component can handle it
-      if (err instanceof Error) {
-        throw err;
-      } else {
-        throw new Error('Failed to add new vehicle.');
-      }
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add car';
+      console.error('Error adding car:', err);
+      setError(errorMessage);
+      throw err;
+    } finally {
+      removeActiveOperation('car-operation');
     }
   };
 
   const updateCar = async (id: string, updates: Partial<Car>) => {
-    const operationId = `car-update-${id}`;
-    if (isOperationActive(operationId)) return;
-
     try {
-      addActiveOperation(operationId);
-      const { error } = await supabase
+      addActiveOperation('car-operation');
+      setError(null);
+      console.log('Updating car:', id, updates);
+      
+      const { data, error } = await supabase
         .from('cars')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id);
+        .update({ 
+          ...updates, 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) {
         console.error('Supabase error updating car:', error);
         throw error;
       }
+      
+      console.log('Car updated successfully:', data);
     } catch (err) {
-      console.error('Error in updateCar:', err);
-      throw new Error(`Failed to update vehicle.`);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update car';
+      console.error('Error updating car:', err);
+      setError(errorMessage);
+      throw err;
     } finally {
-      removeActiveOperation(operationId);
+      removeActiveOperation('car-operation');
     }
   };
 
   const removeCar = async (id: string) => {
-    const operationId = `car-remove-${id}`;
-    if (isOperationActive(operationId)) return;
-    
     try {
-      addActiveOperation(operationId);
+      addActiveOperation('car-operation');
+      setError(null);
+      console.log('Removing car:', id);
+      
       const { error } = await supabase
         .from('cars')
         .delete()
         .eq('id', id);
-        
+
       if (error) {
         console.error('Supabase error removing car:', error);
         throw error;
       }
+      
+      console.log('Car removed successfully');
     } catch (err) {
-      console.error('Error in removeCar:', err);
-      throw new Error('Failed to remove vehicle.');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to remove car';
+      console.error('Error removing car:', err);
+      setError(errorMessage);
+      throw err;
     } finally {
-      removeActiveOperation(operationId);
+      removeActiveOperation('car-operation');
     }
   };
 
   const addCrew = async (crew: Omit<CrewMember, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      const { error } = await supabase
+      addActiveOperation('crew-operation');
+      console.log('Adding crew member:', crew);
+      
+      const { data, error } = await supabase
         .from('crew_members')
-        .insert([{ ...crew }]);
+        .insert([crew])
+        .select()
+        .single();
 
       if (error) {
         console.error('Supabase error adding crew member:', error);
         throw error;
       }
+      
+      console.log('Crew member added successfully:', data);
     } catch (err) {
-      console.error('Error in addCrew:', err);
-      throw new Error('Failed to add crew member.');
+      console.error('Error adding crew member:', err);
+      throw err;
+    } finally {
+      removeActiveOperation('crew-operation');
     }
   };
 
   const updateCrew = async (id: string, updates: Partial<CrewMember>) => {
-    const operationId = `crew-update-${id}`;
-    if (isOperationActive(operationId)) return;
-
     try {
-      addActiveOperation(operationId);
-      const { error } = await supabase
+      addActiveOperation('crew-operation');
+      console.log('Updating crew member:', id, updates);
+      
+      const { data, error } = await supabase
         .from('crew_members')
-        .update(updates)
-        .eq('id', id);
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) {
         console.error('Supabase error updating crew member:', error);
         throw error;
       }
+      
+      console.log('Crew member updated successfully:', data);
     } catch (err) {
-      console.error('Error in updateCrew:', err);
-      throw new Error('Failed to update crew member.');
+      console.error('Error updating crew member:', err);
+      throw err;
     } finally {
-      removeActiveOperation(operationId);
+      removeActiveOperation('crew-operation');
     }
   };
 
   const removeCrew = async (id: string) => {
-    const operationId = `crew-remove-${id}`;
-    if (isOperationActive(operationId)) return;
-    
     try {
-      addActiveOperation(operationId);
+      addActiveOperation('crew-operation');
+      console.log('Removing crew member:', id);
+      
       const { error } = await supabase
         .from('crew_members')
-        .delete()
+        .update({ is_active: false, updated_at: new Date().toISOString() })
         .eq('id', id);
-        
+
       if (error) {
         console.error('Supabase error removing crew member:', error);
         throw error;
       }
+      
+      console.log('Crew member removed successfully');
     } catch (err) {
-      console.error('Error in removeCrew:', err);
-      throw new Error('Failed to remove crew member.');
+      console.error('Error removing crew member:', err);
+      throw err;
     } finally {
-      removeActiveOperation(operationId);
+      removeActiveOperation('crew-operation');
     }
   };
 
   const addService = async (service: Omit<Service, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       addActiveOperation('service-operation');
-      const { error } = await supabase
+      console.log('Adding service:', service);
+      
+      const { data, error } = await supabase
         .from('services')
-        .insert([{ ...service }]);
+        .insert([service])
+        .select()
+        .single();
 
       if (error) {
         console.error('Supabase error adding service:', error);
         throw error;
       }
+      
+      console.log('Service added successfully:', data);
     } catch (err) {
-      console.error('Error in addService:', err);
-      throw new Error('Failed to add service.');
+      console.error('Error adding service:', err);
+      throw err;
     } finally {
       removeActiveOperation('service-operation');
     }
@@ -422,18 +460,24 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updateService = async (id: string, updates: Partial<Service>) => {
     try {
       addActiveOperation('service-operation');
-      const { error } = await supabase
+      console.log('Updating service:', id, updates);
+      
+      const { data, error } = await supabase
         .from('services')
-        .update(updates)
-        .eq('id', id);
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) {
         console.error('Supabase error updating service:', error);
         throw error;
       }
+      
+      console.log('Service updated successfully:', data);
     } catch (err) {
-      console.error('Error in updateService:', err);
-      throw new Error('Failed to update service.');
+      console.error('Error updating service:', err);
+      throw err;
     } finally {
       removeActiveOperation('service-operation');
     }
@@ -442,6 +486,8 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const deleteService = async (id: string) => {
     try {
       addActiveOperation('service-operation');
+      console.log('Deleting service:', id);
+      
       const { error } = await supabase
         .from('services')
         .delete()
@@ -451,9 +497,11 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         console.error('Supabase error deleting service:', error);
         throw error;
       }
+      
+      console.log('Service deleted successfully');
     } catch (err) {
-      console.error('Error in deleteService:', err);
-      throw new Error('Failed to delete service.');
+      console.error('Error deleting service:', err);
+      throw err;
     } finally {
       removeActiveOperation('service-operation');
     }
@@ -462,17 +510,23 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addPackage = async (pkg: Omit<ServicePackage, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       addActiveOperation('package-operation');
-      const { error } = await supabase
+      console.log('Adding package:', pkg);
+      
+      const { data, error } = await supabase
         .from('service_packages')
-        .insert([{ ...pkg }]);
+        .insert([pkg])
+        .select()
+        .single();
 
       if (error) {
         console.error('Supabase error adding package:', error);
         throw error;
       }
+      
+      console.log('Package added successfully:', data);
     } catch (err) {
-      console.error('Error in addPackage:', err);
-      throw new Error('Failed to add package.');
+      console.error('Error adding package:', err);
+      throw err;
     } finally {
       removeActiveOperation('package-operation');
     }
@@ -481,18 +535,24 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updatePackage = async (id: string, updates: Partial<ServicePackage>) => {
     try {
       addActiveOperation('package-operation');
-      const { error } = await supabase
+      console.log('Updating package:', id, updates);
+      
+      const { data, error } = await supabase
         .from('service_packages')
-        .update(updates)
-        .eq('id', id);
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) {
         console.error('Supabase error updating package:', error);
         throw error;
       }
+      
+      console.log('Package updated successfully:', data);
     } catch (err) {
-      console.error('Error in updatePackage:', err);
-      throw new Error('Failed to update package.');
+      console.error('Error updating package:', err);
+      throw err;
     } finally {
       removeActiveOperation('package-operation');
     }
@@ -501,18 +561,22 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const deletePackage = async (id: string) => {
     try {
       addActiveOperation('package-operation');
+      console.log('Deleting package:', id);
+      
       const { error } = await supabase
         .from('service_packages')
-        .delete()
+        .update({ is_active: false, updated_at: new Date().toISOString() })
         .eq('id', id);
 
       if (error) {
         console.error('Supabase error deleting package:', error);
         throw error;
       }
+      
+      console.log('Package deleted successfully');
     } catch (err) {
-      console.error('Error in deletePackage:', err);
-      throw new Error('Failed to delete package.');
+      console.error('Error deleting package:', err);
+      throw err;
     } finally {
       removeActiveOperation('package-operation');
     }
