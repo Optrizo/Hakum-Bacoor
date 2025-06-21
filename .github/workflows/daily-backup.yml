@@ -1,4 +1,4 @@
-name: Daily Crew Data Backup
+name: Daily Data Backup
 
 on:
   schedule:
@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: npm ci || npm install
       
-      - name: Run backup script
+      - name: Run crew data backup script
         run: node transfer-crew-data.js
         env:
           # Pass environment variables from GitHub secrets
@@ -34,6 +34,16 @@ jobs:
           VITE_AIRTABLE_API_KEY: ${{ secrets.VITE_AIRTABLE_API_KEY }}
           VITE_AIRTABLE_BASE_ID: ${{ secrets.VITE_AIRTABLE_BASE_ID }}
           VITE_AIRTABLE_TABLE_CREW: ${{ secrets.VITE_AIRTABLE_TABLE_CREW }}
+      
+      - name: Run services backup script
+        run: node api/backup-services.js
+        env:
+          # Pass environment variables from GitHub secrets
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}          
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_AIRTABLE_API_KEY: ${{ secrets.VITE_AIRTABLE_API_KEY }}
+          VITE_AIRTABLE_BASE_ID: ${{ secrets.VITE_AIRTABLE_BASE_ID }}
+          VITE_AIRTABLE_TABLE_SERVICES: ${{ secrets.VITE_AIRTABLE_TABLE_SERVICES }}
       
       - name: Save backup logs
         if: always()

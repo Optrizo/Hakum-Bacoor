@@ -2,20 +2,24 @@
   "name": "vite-react-typescript-starter",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
-  "scripts": {
+  "type": "module",  "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "supabase:start": "npx supabase start",
-    "supabase:stop": "npx supabase stop"
+    "supabase:stop": "npx supabase stop",
+    "backup:services": "node api/backup-services.js",
+    "test:schema": "node test-schema-detection.js",
+    "test:mapping": "node test-service-mapping.js",
+    "test:new-only": "node test-new-records-only.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.0",
     "airtable": "^0.12.2",
     "dotenv": "^16.5.0",
     "lucide-react": "^0.344.0",
+    "node-fetch": "^3.3.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.22.2"
