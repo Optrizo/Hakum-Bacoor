@@ -11,13 +11,11 @@ on:
 jobs:
   backup:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/checkout@v4
+        - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
@@ -27,16 +25,16 @@ jobs:
       
       - name: Run backup script
         run: node transfer-crew-data.js
-        env:
-          # Pass environment variables from GitHub secrets          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        env:      
+          # Pass environment variables from GitHub secrets
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_AIRTABLE_API_KEY: ${{ secrets.VITE_AIRTABLE_API_KEY }}
           VITE_AIRTABLE_BASE_ID: ${{ secrets.VITE_AIRTABLE_BASE_ID }}
           VITE_AIRTABLE_TABLE_CREW: ${{ secrets.VITE_AIRTABLE_TABLE_CREW }}
-      
-      - name: Save backup logs
+        - name: Save backup logs
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: backup-logs
           path: backup-logs.txt

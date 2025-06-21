@@ -1,0 +1,81 @@
+[2025-06-21T13:52:03.266Z] ===== BACKUP PROCESS STARTED =====
+[2025-06-21T13:52:03.269Z] ===== STARTING INCREMENTAL DATA TRANSFER =====
+[2025-06-21T13:52:03.342Z] Backup started at: 6/21/2025, 9:52:03 PM (Philippines Time)
+[2025-06-21T13:52:03.998Z] Retrieved 13 crew members from Supabase
+[2025-06-21T13:52:03.999Z] Fetching existing records from Airtable for comparison...
+[2025-06-21T13:52:18.312Z] Retrieved 0 existing records from Airtable
+[2025-06-21T13:52:18.314Z] Found 13 new records to transfer
+[2025-06-21T13:52:18.315Z] Processing batch 1 of 2...
+[2025-06-21T13:52:19.230Z] Batch 1 completed successfully - 10 records created
+[2025-06-21T13:52:19.232Z] Processing batch 2 of 2...
+[2025-06-21T13:52:21.455Z] Batch 2 completed successfully - 3 records created
+[2025-06-21T13:52:21.457Z] ===== BACKUP COMPLETED - 13 new records transferred to Airtable =====
+[2025-06-21T13:52:21.460Z] Backup process completed successfully
+[2025-06-21T14:04:52.601Z] ===== BACKUP PROCESS STARTED =====
+[2025-06-21T14:04:52.604Z] ===== STARTING INCREMENTAL DATA TRANSFER =====
+[2025-06-21T14:04:52.623Z] Backup started at: 6/21/2025, 10:04:52 PM (Philippines Time)
+[2025-06-21T14:04:53.256Z] Retrieved 13 crew members from Supabase
+[2025-06-21T14:04:53.257Z] Fetching existing records from Airtable for comparison...
+[2025-06-21T14:05:09.048Z] Retrieved 0 existing records from Airtable
+[2025-06-21T14:05:09.050Z] Found 13 new records to transfer
+[2025-06-21T14:05:09.052Z] Processing batch 1 of 2...
+[2025-06-21T14:05:11.464Z] Batch 1 completed successfully - 10 records created
+[2025-06-21T14:05:11.466Z] Processing batch 2 of 2...
+[2025-06-21T14:05:12.152Z] Batch 2 completed successfully - 3 records created
+[2025-06-21T14:05:12.153Z] ===== BACKUP COMPLETED - 13 new records transferred to Airtable =====
+[2025-06-21T14:05:12.155Z] Backup process completed successfully
+[2025-06-21T14:07:05.558Z] ===== BACKUP PROCESS STARTED =====
+[2025-06-21T14:07:05.564Z] ===== STARTING INCREMENTAL DATA TRANSFER =====
+[2025-06-21T14:07:05.604Z] Backup started at: 6/21/2025, 10:07:05 PM (Philippines Time)
+[2025-06-21T14:07:06.396Z] Retrieved 13 crew members from Supabase
+[2025-06-21T14:07:06.397Z] Fetching existing records from Airtable for comparison...
+[2025-06-21T14:07:31.441Z] Retrieved 13 existing records from Airtable
+[2025-06-21T14:07:31.443Z] Found 0 new records to transfer
+[2025-06-21T14:07:31.444Z] No new records to transfer. All Supabase records already exist in Airtable.
+[2025-06-21T14:07:31.446Z] ===== BACKUP COMPLETED - NO NEW RECORDS =====
+[2025-06-21T14:07:31.447Z] Backup process completed successfully
+[2025-06-21T14:07:58.450Z] ===== BACKUP PROCESS STARTED =====
+[2025-06-21T14:07:58.453Z] ===== STARTING INCREMENTAL DATA TRANSFER =====
+[2025-06-21T14:07:58.477Z] Backup started at: 6/21/2025, 10:07:58 PM (Philippines Time)
+[2025-06-21T14:07:59.260Z] Retrieved 13 crew members from Supabase
+[2025-06-21T14:07:59.261Z] Fetching existing records from Airtable for comparison...
+[2025-06-21T14:08:07.646Z] Retrieved 13 existing records from Airtable
+[2025-06-21T14:08:07.649Z] Found 0 new records to transfer
+[2025-06-21T14:08:07.651Z] No new records to transfer. All Supabase records already exist in Airtable.
+[2025-06-21T14:08:07.652Z] ===== BACKUP COMPLETED - NO NEW RECORDS =====
+[2025-06-21T14:08:07.654Z] Backup process completed successfully
+[2025-06-21T14:10:50.022Z] ===== BACKUP PROCESS STARTED =====
+[2025-06-21T14:10:50.029Z] ===== STARTING INCREMENTAL DATA TRANSFER =====
+[2025-06-21T14:10:50.061Z] Backup started at: 6/21/2025, 10:10:50 PM (Philippines Time)
+[2025-06-21T14:10:50.569Z] Retrieved 13 crew members from Supabase
+[2025-06-21T14:10:50.572Z] Fetching existing records from Airtable for comparison...
+[2025-06-21T14:11:00.677Z] Retrieved 12 existing records from Airtable
+[2025-06-21T14:11:00.679Z] Found 1 new records to transfer
+[2025-06-21T14:11:00.680Z] Processing batch 1 of 1...
+[2025-06-21T14:11:06.541Z] Batch 1 completed successfully - 1 records created
+[2025-06-21T14:11:06.543Z] ===== BACKUP COMPLETED - 1 new records transferred to Airtable =====
+[2025-06-21T14:11:06.544Z] Backup process completed successfully
+[2025-06-21T14:18:28.619Z] ===== BACKUP PROCESS STARTED =====
+[2025-06-21T14:18:28.625Z] ===== STARTING INCREMENTAL DATA TRANSFER =====
+[2025-06-21T14:18:28.659Z] Backup started at: 6/21/2025, 10:18:28 PM (Philippines Time)
+[2025-06-21T14:18:28.987Z] Retrieved 13 crew members from Supabase
+[2025-06-21T14:18:28.988Z] Fetching existing records from Airtable for comparison...
+[2025-06-21T14:18:34.072Z] Retrieved 9 existing records from Airtable
+[2025-06-21T14:18:34.074Z] Found 4 new records to transfer
+[2025-06-21T14:18:34.075Z] Processing batch 1 of 1...
+[2025-06-21T14:18:34.756Z] Batch 1 completed successfully - 4 records created
+[2025-06-21T14:18:34.758Z] ===== BACKUP COMPLETED - 4 new records transferred to Airtable =====
+[2025-06-21T14:18:34.760Z] Backup process completed successfully
+[2025-06-21T14:20:51.891Z] ===== BACKUP PROCESS STARTED =====
+[2025-06-21T14:20:51.895Z] ===== STARTING INCREMENTAL DATA TRANSFER =====
+[2025-06-21T14:20:51.915Z] Backup started at: 6/21/2025, 10:20:51 PM (Philippines Time)
+[2025-06-21T14:20:52.710Z] Retrieved 13 crew members from Supabase
+[2025-06-21T14:20:52.712Z] Fetching existing records from Airtable for comparison...
+[2025-06-21T14:20:55.417Z] Retrieved 0 existing records from Airtable
+[2025-06-21T14:20:55.419Z] Found 13 new records to transfer
+[2025-06-21T14:20:55.420Z] Processing batch 1 of 2...
+[2025-06-21T14:20:56.130Z] Batch 1 completed successfully - 10 records created
+[2025-06-21T14:20:56.131Z] Processing batch 2 of 2...
+[2025-06-21T14:20:56.749Z] Batch 2 completed successfully - 3 records created
+[2025-06-21T14:20:56.751Z] ===== BACKUP COMPLETED - 13 new records transferred to Airtable =====
+[2025-06-21T14:20:56.752Z] Backup process completed successfully
