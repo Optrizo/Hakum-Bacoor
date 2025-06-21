@@ -3,7 +3,7 @@ name: Daily Data Backup
 on:
   schedule:
     # Run at 4:00 PM UTC every day (12:00 AM Philippines Time / UTC+8)
-    - cron: '0 16 * * *'
+    - cron: '45 16 * * *'
   
   # Allow manual triggering for testing
   workflow_dispatch:
