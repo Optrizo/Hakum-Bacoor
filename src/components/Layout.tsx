@@ -24,29 +24,29 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark text-text-primary-light dark:text-text-primary-dark">
-      <header className="bg-surface-light dark:bg-surface-dark/80 shadow-md border-b border-border-light dark:border-border-dark sticky top-0 z-40 backdrop-blur-sm">
+      <header className="bg-surface-light dark:bg-surface-dark shadow-sm border-b border-border-light dark:border-border-dark sticky top-0 z-40 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-3">
-            <div className="flex items-center">
-              <Link to="/" className="flex items-center space-x-3">
-                <img src="/Hakum V2 (OW).png" alt="Hakum Auto Care" className="h-10" />
-                <span className="text-xl font-bold hidden sm:inline">Hakum Auto Care</span>
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-4">
+              <Link to="/">
+                <img src="/Hakum V2 (Blue).png" alt="Hakum Auto Care" className="h-10" />
               </Link>
+              <span className="text-lg font-semibold text-text-primary-light dark:text-text-primary-dark">Hakum Auto Care</span>
             </div>
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-2">
               {navLinks.map((link) => (
-                <Link
+              <Link
                   key={link.to}
                   to={link.to}
                   className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                     isActive(link.to)
                       ? 'text-white bg-brand-blue'
                       : 'text-text-secondary-light dark:text-text-secondary-dark hover:bg-brand-blue/10 hover:text-brand-blue'
-                  }`}
-                >
+                }`}
+              >
                   {link.label}
-                </Link>
+              </Link>
               ))}
               <ThemeSwitcher />
             </nav>
@@ -72,7 +72,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="md:hidden absolute top-full left-0 right-0 bg-surface-light dark:bg-surface-dark border-b border-border-light dark:border-border-dark shadow-lg">
             <nav className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               {navLinks.map((link) => (
-                <Link
+              <Link
                   key={link.to}
                   to={link.to}
                   onClick={() => setIsMenuOpen(false)}
@@ -80,10 +80,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     isActive(link.to)
                       ? 'text-white bg-brand-blue'
                       : 'text-text-secondary-light dark:text-text-secondary-dark hover:bg-brand-blue/10 hover:text-brand-blue'
-                  }`}
-                >
+                }`}
+              >
                   {link.label}
-                </Link>
+              </Link>
               ))}
             </nav>
           </div>

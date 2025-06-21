@@ -16,11 +16,17 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
 
   const { text, bg } = statusStyles[status] || { text: 'text-gray-800 dark:text-gray-300', bg: 'bg-gray-100 dark:bg-gray-700' };
 
+  const formattedStatus = status
+    .replace('-', ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
   return (
     <span
       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bg} ${text}`}
     >
-      {status.replace('-', ' ')}
+      {formattedStatus}
     </span>
   );
 };

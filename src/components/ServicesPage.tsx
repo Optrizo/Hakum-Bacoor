@@ -80,7 +80,8 @@ const ServicesPage: React.FC = () => {
       resetServiceForm();
     } catch (error) {
       console.error('Error saving service:', error);
-      alert('Failed to save service. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to save service: ${errorMessage}. Please try again.`);
     }
   };
 
@@ -115,7 +116,8 @@ const ServicesPage: React.FC = () => {
       resetPackageForm();
     } catch (error) {
       console.error('Error saving package:', error);
-      alert('Failed to save package. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to save package: ${errorMessage}. Please try again.`);
     }
   };
 
@@ -143,23 +145,25 @@ const ServicesPage: React.FC = () => {
   };
 
   const handleDeleteService = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this service?')) {
+    if (window.confirm('Are you sure you want to delete this service? This action cannot be undone.')) {
       try {
         await deleteService(id);
       } catch (error) {
         console.error('Error deleting service:', error);
-        alert('Failed to delete service. Please try again.');
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        alert(`Failed to delete service: ${errorMessage}. Please try again.`);
       }
     }
   };
 
   const handleDeletePackage = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this package?')) {
+    if (window.confirm('Are you sure you want to delete this package? This action cannot be undone.')) {
       try {
         await deletePackage(id);
       } catch (error) {
         console.error('Error deleting package:', error);
-        alert('Failed to delete package. Please try again.');
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        alert(`Failed to delete package: ${errorMessage}. Please try again.`);
       }
     }
   };
@@ -315,14 +319,14 @@ const ServicesPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-background-light dark:bg-background-dark rounded-md border border-border-light dark:border-border-dark">
             {services.map(service => (
               <label key={service.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={packageFormData.service_ids.includes(service.id)}
-                  onChange={() => handleServiceToggle(service.id)}
+                  <input
+                    type="checkbox"
+                    checked={packageFormData.service_ids.includes(service.id)}
+                    onChange={() => handleServiceToggle(service.id)}
                   className="h-4 w-4 rounded bg-background-light dark:bg-gray-700 border-border-light dark:border-border-dark text-brand-blue focus:ring-brand-blue"
-                />
+                  />
                 <span className="text-sm text-text-primary-light dark:text-text-primary-dark">{service.name}</span>
-              </label>
+                </label>
             ))}
           </div>
         </div>
@@ -369,65 +373,96 @@ const ServicesPage: React.FC = () => {
   ), [packageFormData, editingPackage, services]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary-light dark:text-text-primary-dark">Services & Packages</h1>
-          <p className="text-text-secondary-light dark:text-text-secondary-dark mt-1">Manage your car wash offerings</p>
+    <div className="flex-1 overflow-y-auto p-2 sm:p-4 lg:p-6 xl:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-brand-blue truncate">Services & Packages</h1>
+            <p className="text-sm sm:text-base text-text-secondary-light dark:text-text-secondary-dark mt-1">
+              Manage your service offerings and package deals
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark whitespace-nowrap">
+              {services.length} Services, {packages.length} Packages
+            </span>
+            {!showAddForm && !editingService && !editingPackage && (
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-brand-blue hover:bg-brand-dark-blue transition-all duration-200 transform hover:scale-105 active:scale-95"
+              >
+                <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+                <span className="hidden xs:inline">Add New</span>
+                <span className="xs:hidden">Add</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="border-b border-border-light dark:border-border-dark mb-6">
+          <nav className="-mb-px flex space-x-6 sm:space-x-8 overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('services')}
+              className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'services'
+                  ? 'border-brand-blue text-brand-blue'
+                  : 'border-transparent text-text-secondary-light dark:text-text-secondary-dark hover:text-text-primary-light dark:hover:text-text-primary-dark hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+            >
+              Services ({services.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('packages')}
+              className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'packages'
+                  ? 'border-brand-blue text-brand-blue'
+                  : 'border-transparent text-text-secondary-light dark:text-text-secondary-dark hover:text-text-primary-light dark:hover:text-text-primary-dark hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+            >
+              Packages ({packages.length})
+            </button>
+          </nav>
+        </div>
+
+        {/* Form */}
+        {(showAddForm || editingService || editingPackage) && (
+          <div className="bg-surface-light dark:bg-surface-dark p-4 sm:p-6 rounded-lg shadow-sm border border-border-light dark:border-border-dark mb-6">
+            <div className="mb-4">
+              <h3 className="text-lg sm:text-xl font-semibold text-text-primary-light dark:text-text-primary-dark">
+                {editingService ? 'Edit Service' : editingPackage ? 'Edit Package' : `Add New ${activeTab === 'services' ? 'Service' : 'Package'}`}
+              </h3>
+              <p className="text-sm text-text-secondary-light dark:text-text-secondary-dark mt-1">
+                {activeTab === 'services' 
+                  ? 'Configure service details and pricing for different vehicle sizes'
+                  : 'Create package deals by combining multiple services'
+                }
+              </p>
+            </div>
+            
+            {activeTab === 'services' ? ServiceForm : PackageForm}
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="space-y-6">
+          {activeTab === 'services' ? (
+            <ServiceList 
+              services={services} 
+              onEdit={handleEditService} 
+              onDelete={handleDeleteService} 
+            />
+          ) : (
+            <PackageList 
+              packages={packages} 
+              services={services} 
+              onEdit={handleEditPackage} 
+              onDelete={handleDeletePackage} 
+            />
+          )}
         </div>
       </div>
-      
-      <div className="border-b border-border-light dark:border-border-dark">
-        <nav className="-mb-px flex flex-wrap gap-x-6" aria-label="Tabs">
-          <button
-            onClick={() => { setActiveTab('services'); setShowAddForm(false); setEditingService(null); setEditingPackage(null); }}
-            className={`${
-              activeTab === 'services'
-                ? 'border-brand-blue text-brand-blue'
-                : 'border-transparent text-text-secondary-light dark:text-text-secondary-dark hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500'
-            } whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors flex items-center`}
-          >
-            <Wrench className="h-5 w-5 mr-2" />
-            <span>Services ({services.length})</span>
-          </button>
-          <button
-            onClick={() => { setActiveTab('packages'); setShowAddForm(false); setEditingService(null); setEditingPackage(null); }}
-            className={`${
-              activeTab === 'packages'
-                ? 'border-brand-blue text-brand-blue'
-                : 'border-transparent text-text-secondary-light dark:text-text-secondary-dark hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500'
-            } whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors flex items-center`}
-          >
-            <Package className="h-5 w-5 mr-2" />
-            <span>Packages ({packages.length})</span>
-          </button>
-        </nav>
-      </div>
-
-      <div className="flex justify-end">
-        {(!showAddForm && !editingService && !editingPackage) && (
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-brand-blue hover:bg-brand-dark-blue"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            {`Add New ${activeTab === 'services' ? 'Service' : 'Package'}`}
-          </button>
-        )}
-      </div>
-
-      {showAddForm && activeTab === 'services' && !editingService && ServiceForm}
-      {editingService && ServiceForm}
-      
-      {showAddForm && activeTab === 'packages' && !editingPackage && PackageForm}
-      {editingPackage && PackageForm}
-
-      {activeTab === 'services' && !showAddForm && !editingService && (
-        <ServiceList services={services} onEdit={handleEditService} onDelete={handleDeleteService} />
-      )}
-      {activeTab === 'packages' && !showAddForm && !editingPackage && (
-        <PackageList packages={packages} services={services} onEdit={handleEditPackage} onDelete={handleDeletePackage} />
-      )}
     </div>
   );
 };
@@ -456,29 +491,29 @@ const ServiceList = ({ services, onEdit, onDelete }) => (
             <div className="flex space-x-2 self-end sm:self-center flex-shrink-0">
               <button onClick={() => onEdit(service)} className="p-2 text-text-secondary-light dark:text-text-secondary-dark hover:text-brand-blue bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-md transition-colors">
                 <span className="sr-only">Edit {service.name}</span>
-                <Edit2 className="h-4 w-4" />
-              </button>
+                      <Edit2 className="h-4 w-4" />
+                    </button>
               <button onClick={() => onDelete(service.id)} className="p-2 text-red-500 hover:text-red-400 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-md transition-colors">
                 <span className="sr-only">Delete {service.name}</span>
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </li>
-      ))}
-      {services.length === 0 && (
-        <li className="px-6 py-8 text-center">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+            {services.length === 0 && (
+              <li className="px-6 py-8 text-center">
           <p className="text-text-secondary-light dark:text-text-secondary-dark">No services found. Add a service to get started.</p>
-        </li>
-      )}
-    </ul>
-  </div>
+              </li>
+            )}
+          </ul>
+        </div>
 );
 
 const PackageList = ({ packages, services, onEdit, onDelete }) => (
   <div className="bg-surface-light dark:bg-surface-dark shadow overflow-hidden sm:rounded-lg border border-border-light dark:border-border-dark">
     <ul className="divide-y divide-border-light dark:divide-border-dark">
-      {packages.map((pkg) => (
+            {packages.map((pkg) => (
         <li key={pkg.id} className="px-4 py-4 sm:px-6 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex-grow">
@@ -489,45 +524,45 @@ const PackageList = ({ packages, services, onEdit, onDelete }) => (
                 <ul className="flex flex-wrap gap-2 mt-1">
                   {pkg.service_ids.map(id => {
                     const service = services.find(s => s.id === id);
-                    return service ? (
+                          return service ? (
                       <li key={id} className="text-sm text-text-primary-light dark:text-text-primary-dark bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-                        {service.name}
+                              {service.name}
                       </li>
-                    ) : null;
-                  })}
+                          ) : null;
+                        })}
                 </ul>
-              </div>
+                      </div>
               <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2 text-sm">
-                {CAR_SIZES.map(size => (
+                      {CAR_SIZES.map(size => (
                   <div key={size.value} className="flex justify-between items-baseline sm:block">
                     <span className="text-text-secondary-light dark:text-text-secondary-dark capitalize">{size.label}: </span>
                     <span className="font-semibold text-green-600 dark:text-green-400">
-                      ₱{(pkg.pricing?.[size.value] || 0).toLocaleString()}
-                    </span>
+                            ₱{(pkg.pricing?.[size.value] || 0).toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
             <div className="flex space-x-2 self-end sm:self-center flex-shrink-0">
               <button onClick={() => onEdit(pkg)} className="p-2 text-text-secondary-light dark:text-text-secondary-dark hover:text-brand-blue bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-md transition-colors">
                 <span className="sr-only">Edit {pkg.name}</span>
-                <Edit2 className="h-4 w-4" />
-              </button>
+                      <Edit2 className="h-4 w-4" />
+                    </button>
               <button onClick={() => onDelete(pkg.id)} className="p-2 text-red-500 hover:text-red-400 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-md transition-colors">
                 <span className="sr-only">Delete {pkg.name}</span>
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </li>
-      ))}
-      {packages.length === 0 && (
-        <li className="px-6 py-8 text-center">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+            {packages.length === 0 && (
+              <li className="px-6 py-8 text-center">
           <p className="text-text-secondary-light dark:text-text-secondary-dark">No packages found. Add a package to get started.</p>
-        </li>
-      )}
-    </ul>
-  </div>
-);
+              </li>
+            )}
+          </ul>
+    </div>
+  );
 
 export default ServicesPage;
