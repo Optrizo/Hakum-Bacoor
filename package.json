@@ -10,9 +10,11 @@
     "supabase:start": "npx supabase start",
     "supabase:stop": "npx supabase stop",
     "backup:services": "node api/backup-services.js",
+    "backup:crew": "node api/backup-crew-data.js",
     "test:schema": "node test-schema-detection.js",
     "test:mapping": "node test-service-mapping.js",
-    "test:new-only": "node test-new-records-only.js"
+    "test:new-only": "node test-new-records-only.js",
+    "test:logging": "node test-logging.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.0",

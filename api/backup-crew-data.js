@@ -1,6 +1,27 @@
-// This file will be placed in the /api directory for Vercel to use with Cron Jobs
 import { createClient } from '@supabase/supabase-js';
 import Airtable from 'airtable';
+import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+
+// Load environment variables
+dotenv.config();
+
+// Setup logging - works in both local and cloud environments
+const logFile = path.join(process.cwd(), 'backup-logs.txt');
+const logMessage = (message) => {
+  const timestamp = new Date().toISOString();
+  const logEntry = `[${timestamp}] ${message}\n`;
+  console.log(message);
+  
+  // Also append to log file if possible (might not work in some cloud environments)
+  try {
+    // Ensure the directory exists
+    fs.appendFileSync(logFile, logEntry);
+  } catch (err) {
+    console.error('Note: Could not write to log file:', err.message);
+  }
+};
 
 // Initialize Supabase client
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -14,11 +35,48 @@ Airtable.configure({
 const airtableBase = Airtable.base(process.env.VITE_AIRTABLE_BASE_ID);
 const airtableTable = process.env.VITE_AIRTABLE_TABLE_CREW;
 
+// Function to set up the Airtable table if it doesn't exist or has no fields
+async function setupAirtableTable() {
+  try {
+    console.log('Setting up Airtable table structure...');
+    
+    // Check if the table has any records
+    const existingRecords = await airtableBase(airtableTable).select({ maxRecords: 1 }).all();
+    
+    if (existingRecords.length === 0) {
+      console.log('Creating initial record to set up table structure...');
+      
+      // Create a sample record to set up the table structure
+      const sampleRecord = {
+        fields: {
+          'Name': 'Sample Crew Member (Delete Me)',
+          'Phone': '123-456-7890',
+          'Is Active': true,
+          'Supabase ID': 'sample-id',
+          'Created': new Date().toISOString().split('T')[0],
+          'Last Modified': new Date().toISOString().split('T')[0],
+          'Notes': 'This is a sample record to set up the table structure. You can delete it.'
+        }
+      };
+      
+      await airtableBase(airtableTable).create([sampleRecord]);
+      console.log('Sample record created successfully. Table structure is now set up.');
+      return true;
+    } else {
+      console.log('Table already has records. No setup needed.');
+      return false;
+    }
+  } catch (error) {
+    console.error('Error setting up Airtable table:', error);
+    return false;
+  }
+}
+
 // Function to transfer only new records from Supabase to Airtable
 async function transferData() {
   try {
-    console.log('===== STARTING INCREMENTAL DATA TRANSFER =====');
-    console.log(`Backup started at: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' })} (Philippines Time)`);
+    logMessage('=== STARTING CREW DATA BACKUP ===');
+    logMessage(`Started: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' })}`);
     
     // Fetch data from Supabase
     const { data: crewMembers, error } = await supabase
@@ -29,14 +87,12 @@ async function transferData() {
       throw new Error(`Error fetching data from Supabase: ${error.message}`);
     }
     
-    console.log(`Retrieved ${crewMembers.length} crew members from Supabase`);
+    logMessage(`Retrieved ${crewMembers.length} crew members from Supabase`);
 
     // Fetch existing records from Airtable to compare
-    console.log('Fetching existing records from Airtable for comparison...');
     const existingAirtableRecords = await airtableBase(airtableTable).select().all();
-    console.log(`Retrieved ${existingAirtableRecords.length} existing records from Airtable`);
-    
-    // Create a map of existing records by Supabase ID for easy lookup
+    logMessage(`Retrieved ${existingAirtableRecords.length} existing records from Airtable`);
+      // Create a map of existing records by Supabase ID for easy lookup
     const existingRecordMap = new Map();
     existingAirtableRecords.forEach(record => {
       // Check if the record has an id field that matches a Supabase ID
@@ -44,15 +100,14 @@ async function transferData() {
         existingRecordMap.set(record.fields.id, record);
       }
     });
-    
-    // Filter out crew members that already exist in Airtable
+      // Filter out crew members that already exist in Airtable
     const newCrewMembers = crewMembers.filter(member => !existingRecordMap.has(member.id));
-    console.log(`Found ${newCrewMembers.length} new records to transfer`);
+    logMessage(`New records to transfer: ${newCrewMembers.length}`);
     
     if (newCrewMembers.length === 0) {
-      console.log('No new records to transfer. All Supabase records already exist in Airtable.');
-      console.log('===== BACKUP COMPLETED - NO NEW RECORDS =====');
-      return { success: true, message: 'No new records to transfer', newRecords: 0 };
+      logMessage('No new records to transfer');
+      logMessage('=== BACKUP COMPLETE - NO NEW RECORDS ===');
+      return;
     }
     
     // Prepare data for Airtable
@@ -62,13 +117,11 @@ async function transferData() {
     
     for (let i = 0; i < newCrewMembers.length; i += batchSize) {
       batches.push(newCrewMembers.slice(i, i + batchSize));
-    }
-    
-    // Transfer data in batches
+    }    // Transfer data in batches
     let successCount = 0;
     
     for (const [index, batch] of batches.entries()) {
-      console.log(`Processing batch ${index + 1} of ${batches.length}...`);
+      logMessage(`Processing batch ${index + 1}/${batches.length}...`);
       const airtableRecords = batch.map(member => {
         // Create a fields object with the correct field names we discovered
         const fields = {};
@@ -101,50 +154,119 @@ async function transferData() {
       try {
         const createdRecords = await airtableBase(airtableTable).create(airtableRecords);
         successCount += createdRecords.length;
-        console.log(`Batch ${index + 1} completed successfully - ${createdRecords.length} records created`);
+        logMessage(`Batch ${index + 1}/${batches.length}: ${createdRecords.length} created`);
       } catch (err) {
-        console.error(`Error creating records in batch ${index + 1}:`, err);
-        console.log('Attempting to continue with next batch...');
+        logMessage(`Error in batch ${index + 1}: ${err.message}`);
       }
     }
     
-    console.log(`===== BACKUP COMPLETED - ${successCount} new records transferred to Airtable =====`);
-    return { success: true, message: 'Backup completed successfully', newRecords: successCount };
-  } catch (error) {
-    console.error('ERROR DURING DATA TRANSFER:', error);
-    return { success: false, message: `Error during data transfer: ${error.message}` };
+    logMessage(`=== BACKUP COMPLETE - ${successCount} new records created ===`);  } catch (error) {
+    logMessage(`ERROR: ${error.message}`);
+    process.exit(1);
   }
 }
 
-// Export the handler for Vercel Serverless Functions
-export default async function handler(req, res) {
-  // Check if this is a scheduled execution or an unauthorized access
-  const isAuthorizedCron = req.headers['x-vercel-cron'] === '1';
-  const isLocalDevelopment = process.env.NODE_ENV === 'development';
-  
-  if (!isAuthorizedCron && !isLocalDevelopment) {
-    return res.status(401).json({ error: 'Unauthorized access' });
-  }
-  
+// Function to check Airtable table structure
+async function checkAirtableStructure() {
   try {
-    console.log('===== BACKUP PROCESS STARTED =====');
-    const result = await transferData();
-    console.log('Backup process completed');
+    console.log('Checking Airtable table structure...');
     
-    return res.status(200).json({
-      success: true,
-      message: result.message,
-      timestamp: new Date().toISOString(),
-      philippinesTime: new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }),
-      ...result
-    });
+    // Make a special request to get table metadata including field names
+    // This is a workaround since Airtable API doesn't directly expose schema
+    const tableUrl = `https://api.airtable.com/v0/meta/bases/${process.env.VITE_AIRTABLE_BASE_ID}/tables`;
+    
+    // Since we can't use fetch directly in this environment, we'll use another approach    console.log('Please check your Airtable table structure manually by:');
+    console.log('1. Go to https://airtable.com/');
+    console.log(`2. Open your base (${process.env.VITE_AIRTABLE_BASE_ID})`);
+    console.log(`3. Open the table "${process.env.VITE_AIRTABLE_TABLE_CREW}"`);
+    console.log('4. Check the exact names of the fields');
+    
+    // Let's try a simpler approach - create a record with all possible field variations
+    console.log('Attempting to create a record with various field name formats...');
+    
+    const fieldVariations = {
+      // Common field name variations
+      'Name': 'Sample Name',
+      'name': 'Sample Name',
+      'NAME': 'Sample Name',
+      'Full Name': 'Sample Name',
+      'FullName': 'Sample Name',
+      
+      'Phone': '123-456-7890',
+      'phone': '123-456-7890',
+      'PHONE': '123-456-7890',
+      'Phone Number': '123-456-7890',
+      'PhoneNumber': '123-456-7890',
+      
+      'Active': true,
+      'IsActive': true,
+      'Is Active': true,
+      'is_active': true,
+      'Status': 'Active',
+      
+      'ID': 'sample-id',
+      'Id': 'sample-id',
+      'Supabase ID': 'sample-id',
+      'SupabaseID': 'sample-id',
+      'External ID': 'sample-id',
+      
+      'Created': new Date().toISOString(),
+      'Created At': new Date().toISOString(),
+      'CreatedAt': new Date().toISOString(),
+      'Creation Date': new Date().toISOString(),
+      
+      'Notes': 'Sample notes'
+    };
+    
+    try {
+      await airtableBase(airtableTable).create([{ fields: fieldVariations }]);
+      console.log('Successfully created a test record with field variations!');
+      console.log('Please check your Airtable to see which fields were accepted.');
+      console.log('Then update the script with the correct field names.');
+    } catch (error) {
+      console.error('Error creating test record:', error.message);
+      
+      // Let's try to extract field names from the error message
+      if (error.message.includes('Unknown field name')) {
+        console.log('First field name rejected. Let\'s try one by one...');
+        
+        // Try each field individually
+        for (const [fieldName, value] of Object.entries(fieldVariations)) {
+          try {
+            const singleField = {};
+            singleField[fieldName] = value;
+            await airtableBase(airtableTable).create([{ fields: singleField }]);
+            console.log(`SUCCESS: Field "${fieldName}" is valid!`);
+          } catch (fieldError) {
+            if (fieldError.message.includes('Unknown field name')) {
+              console.log(`FAILED: Field "${fieldName}" is not valid.`);
+            } else {
+              console.log(`ERROR with field "${fieldName}":`, fieldError.message);
+            }
+          }
+        }
+      }
+    }
+    
+    return false;
   } catch (error) {
-    console.error('ERROR IN MAIN PROCESS:', error);
-    
-    return res.status(500).json({
-      success: false,
-      message: `Error in backup process: ${error.message}`,
-      timestamp: new Date().toISOString()
-    });
+    console.error('Error checking Airtable structure:', error);
+    return false;
   }
 }
+
+// Update the main function to now actually transfer the data
+async function main() {
+  try {
+    logMessage('=== BACKUP PROCESS STARTED ===');
+    // We've already checked the structure, now let's transfer the data
+    await transferData();
+    logMessage('Backup completed');
+  } catch (error) {
+    logMessage(`ERROR: ${error.message}`);
+    process.exit(1);
+  }
+}
+
+// Run the main function
+main();

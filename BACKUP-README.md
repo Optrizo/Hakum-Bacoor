@@ -44,12 +44,17 @@ You can run the backups manually using npm:
 
 1. For crew data:
    ```
-   npm run transfer-crew
+   npm run backup:crew
    ```
 
 2. For services data:
    ```
    npm run backup:services
+   ```
+
+3. Test the logging system:
+   ```
+   npm run test:logging
    ```
 
 ## Services Backup Implementation
@@ -108,3 +113,39 @@ The script maps the following fields from Supabase to Airtable (if they exist in
 | pricing.extra_large | extra_large | From nested pricing object |
 | created_at | created_at | Formatted as YYYY-MM-DD |
 | updated_at | updated_at | Formatted as YYYY-MM-DD |
+
+## Logging System
+
+The backup system includes a robust logging mechanism that:
+
+1. Outputs logs to the console during execution
+2. Simultaneously writes logs to a `backup-logs.txt` file in the project root
+3. Includes timestamps in ISO format for accurate tracking
+4. Captures all important events, errors, and backup statistics
+
+This dual logging approach ensures that you have a persistent record of all backup operations, even when run through GitHub Actions, where logs are only temporarily available.
+
+### Log File Format
+
+Each log entry follows this format:
+
+```
+[TIMESTAMP] MESSAGE
+```
+
+Example:
+```
+[2025-06-21T15:42:02.083Z] === STARTING SERVICES BACKUP ===
+[2025-06-21T15:42:02.532Z] Retrieved 24 services from Supabase
+[2025-06-21T15:42:03.123Z] New: 3, Updates: 21
+```
+
+### Testing the Logging System
+
+You can verify that the logging system is working correctly by running:
+
+```
+npm run test:logging
+```
+
+This will attempt to write test messages to the log file and verify that they were successfully written.

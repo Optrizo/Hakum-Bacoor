@@ -79,3 +79,9 @@
 [2025-06-21T14:20:56.749Z] Batch 2 completed successfully - 3 records created
 [2025-06-21T14:20:56.751Z] ===== BACKUP COMPLETED - 13 new records transferred to Airtable =====
 [2025-06-21T14:20:56.752Z] Backup process completed successfully
+[2025-06-21T15:38:40.400Z] Test log message
+[2025-06-21T15:42:02.083Z] Test log message 1
+[2025-06-21T15:42:02.085Z] Test log message 2
+[2025-06-21T15:43:51.441Z] Test log message 1
+[2025-06-21T15:43:51.443Z] Test log message 2
+[2025-06-21T15:45:37.278Z] TEST: Services backup logging test

@@ -19,7 +19,7 @@ const logMessage = (message) => {
     // Ensure the directory exists
     fs.appendFileSync(logFile, logEntry);
   } catch (err) {
-    console.error('Note: Could not write to log file, continuing with console logs only:', err.message);
+    console.error('Note: Could not write to log file:', err.message);
   }
 };
 
@@ -75,8 +75,8 @@ async function setupAirtableTable() {
 // Function to transfer only new records from Supabase to Airtable
 async function transferData() {
   try {
-    logMessage('===== STARTING INCREMENTAL DATA TRANSFER =====');
-    logMessage(`Backup started at: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' })} (Philippines Time)`);
+    logMessage('=== STARTING CREW DATA BACKUP ===');
+    logMessage(`Started: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' })}`);
     
     // Fetch data from Supabase
     const { data: crewMembers, error } = await supabase
@@ -90,7 +90,6 @@ async function transferData() {
     logMessage(`Retrieved ${crewMembers.length} crew members from Supabase`);
 
     // Fetch existing records from Airtable to compare
-    logMessage('Fetching existing records from Airtable for comparison...');
     const existingAirtableRecords = await airtableBase(airtableTable).select().all();
     logMessage(`Retrieved ${existingAirtableRecords.length} existing records from Airtable`);
       // Create a map of existing records by Supabase ID for easy lookup
@@ -101,14 +100,13 @@ async function transferData() {
         existingRecordMap.set(record.fields.id, record);
       }
     });
-    
-    // Filter out crew members that already exist in Airtable
+      // Filter out crew members that already exist in Airtable
     const newCrewMembers = crewMembers.filter(member => !existingRecordMap.has(member.id));
-    logMessage(`Found ${newCrewMembers.length} new records to transfer`);
+    logMessage(`New records to transfer: ${newCrewMembers.length}`);
     
     if (newCrewMembers.length === 0) {
-      logMessage('No new records to transfer. All Supabase records already exist in Airtable.');
-      logMessage('===== BACKUP COMPLETED - NO NEW RECORDS =====');
+      logMessage('No new records to transfer');
+      logMessage('=== BACKUP COMPLETE - NO NEW RECORDS ===');
       return;
     }
     
@@ -119,12 +117,11 @@ async function transferData() {
     
     for (let i = 0; i < newCrewMembers.length; i += batchSize) {
       batches.push(newCrewMembers.slice(i, i + batchSize));
-    }
-      // Transfer data in batches
+    }    // Transfer data in batches
     let successCount = 0;
     
     for (const [index, batch] of batches.entries()) {
-      logMessage(`Processing batch ${index + 1} of ${batches.length}...`);
+      logMessage(`Processing batch ${index + 1}/${batches.length}...`);
       const airtableRecords = batch.map(member => {
         // Create a fields object with the correct field names we discovered
         const fields = {};
@@ -157,16 +154,14 @@ async function transferData() {
       try {
         const createdRecords = await airtableBase(airtableTable).create(airtableRecords);
         successCount += createdRecords.length;
-        logMessage(`Batch ${index + 1} completed successfully - ${createdRecords.length} records created`);
+        logMessage(`Batch ${index + 1}/${batches.length}: ${createdRecords.length} created`);
       } catch (err) {
-        logMessage(`Error creating records in batch ${index + 1}: ${err.message}`);
-        logMessage('Attempting to continue with next batch...');
+        logMessage(`Error in batch ${index + 1}: ${err.message}`);
       }
     }
     
-    logMessage(`===== BACKUP COMPLETED - ${successCount} new records transferred to Airtable =====`);
-  } catch (error) {
-    logMessage(`ERROR DURING DATA TRANSFER: ${error.message}`);
+    logMessage(`=== BACKUP COMPLETE - ${successCount} new records created ===`);  } catch (error) {
+    logMessage(`ERROR: ${error.message}`);
     process.exit(1);
   }
 }
@@ -263,12 +258,12 @@ async function checkAirtableStructure() {
 // Update the main function to now actually transfer the data
 async function main() {
   try {
-    logMessage('===== BACKUP PROCESS STARTED =====');
+    logMessage('=== BACKUP PROCESS STARTED ===');
     // We've already checked the structure, now let's transfer the data
     await transferData();
-    logMessage('Backup process completed successfully');
+    logMessage('Backup completed');
   } catch (error) {
-    logMessage(`ERROR IN MAIN PROCESS: ${error.message}`);
+    logMessage(`ERROR: ${error.message}`);
     process.exit(1);
   }
 }

@@ -3,8 +3,25 @@ import { createClient } from '@supabase/supabase-js';
 import Airtable from 'airtable';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
+
+// Setup logging - works in both local and cloud environments
+const logFile = path.join(process.cwd(), 'backup-logs.txt');
+const logMessage = (message) => {
+  const timestamp = new Date().toISOString();
+  const logEntry = `[${timestamp}] ${message}\n`;
+  console.log(message);
+  
+  // Also append to log file if possible
+  try {
+    fs.appendFileSync(logFile, logEntry);
+  } catch (err) {
+    console.error('Note: Could not write to log file:', err.message);
+  }
+};
 
 // Initialize Supabase client
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -26,7 +43,7 @@ const airtableBaseId = process.env.VITE_AIRTABLE_BASE_ID;
  */
 async function getAirtableTableSchema() {
   try {
-    console.log('Retrieving Airtable table schema using Metadata API...');
+    logMessage('Retrieving Airtable table schema...');
     const url = `https://api.airtable.com/v0/meta/bases/${airtableBaseId}/tables`;
     
     const response = await fetch(url, {
@@ -48,17 +65,17 @@ async function getAirtableTableSchema() {
     const targetTable = tables.find(table => table.name === airtableTable);
     
     if (!targetTable) {
-      console.warn(`Table "${airtableTable}" not found in base schema`);
+      logMessage(`Table "${airtableTable}" not found in base schema`);
       return [];
     }
     
     // Extract field names
     const fields = targetTable.fields.map(field => field.name);
-    console.log(`Retrieved ${fields.length} fields from Airtable schema: ${fields.join(', ')}`);
+    logMessage(`Retrieved ${fields.length} fields from schema`);
     
     return fields;
   } catch (error) {
-    console.error('Error retrieving Airtable table schema:', error);
+    logMessage(`Error retrieving Airtable table schema: ${error.message}`);
     return null;
   }
 }
@@ -73,24 +90,23 @@ function formatDate(dateString) {
     const date = new Date(dateString);
     return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
   } catch (error) {
-    console.warn(`Error formatting date ${dateString}: ${error.message}`);
+    logMessage(`Error formatting date ${dateString}: ${error.message}`);
     return null;
   }
 }
 
 async function backupServicesToAirtable() {
   try {
-    console.log('===== STARTING SERVICES DATA BACKUP =====');
-    console.log(`Backup started at: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' })} (Philippines Time)`);
+    logMessage('=== STARTING SERVICES BACKUP ===');
+    logMessage(`Started: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' })}`);
     
     // Get existing records from Airtable first to avoid duplicates
-    console.log('Fetching existing records from Airtable for comparison...');
     const existingRecords = await airtableBase(airtableTable).select({
       fields: ['id']
     }).all();
     
     const existingIds = new Set(existingRecords.map(record => record.fields.id));
-    console.log(`Found ${existingIds.size} existing services in Airtable.`);
+    logMessage(`Found ${existingIds.size} existing services in Airtable`);
     
     // Fetch all services from Supabase
     const { data: services, error } = await supabase
@@ -101,15 +117,14 @@ async function backupServicesToAirtable() {
       throw new Error(`Failed to fetch services from Supabase: ${error.message}`);
     }
     
-    console.log(`Retrieved ${services.length} services from Supabase.`);
+    logMessage(`Retrieved ${services.length} services from Supabase`);
       // Filter out services that already exist in Airtable
     const newServices = services.filter(service => !existingIds.has(service.id));
     const servicesToUpdate = services.filter(service => existingIds.has(service.id));
     
-    console.log(`Found ${newServices.length} new services to create and ${servicesToUpdate.length} services to update.`);
-    
-    if (newServices.length === 0 && servicesToUpdate.length === 0) {
-      console.log('No new or updated services to process. Backup completed.');
+    logMessage(`New: ${newServices.length}, Updates: ${servicesToUpdate.length}`);
+      if (newServices.length === 0 && servicesToUpdate.length === 0) {
+      logMessage('No new or updated services. Backup completed.');
       return { 
         success: true, 
         message: 'No new or updated services found', 
@@ -117,8 +132,7 @@ async function backupServicesToAirtable() {
         updated: 0 
       };
     }
-    
-    // Get table schema to know what fields exist, even if the table is empty
+      // Get table schema to know what fields exist, even if the table is empty
     let availableFields = [];
     
     // Try to get fields from the Metadata API first
@@ -126,9 +140,8 @@ async function backupServicesToAirtable() {
     
     if (schemaFields && schemaFields.length > 0) {
       availableFields = schemaFields;
-    } else {
-      // Fallback to the old method - checking existing records
-      console.log('Falling back to detecting fields from existing records...');
+    } else {      // Fallback to the old method - checking existing records
+      logMessage('Falling back to detect fields from existing records');
       try {
         // Fetch at least one record to see the fields structure
         const sampleRecords = await airtableBase(airtableTable).select({
@@ -141,24 +154,20 @@ async function backupServicesToAirtable() {
         } else {
           // If no records exist, use fields we know exist based on our check
           availableFields = ['id', 'name', 'price', 'description'];
-        }
-      } catch (error) {
-        console.warn('Could not determine field structure from Airtable, proceeding with basic fields only.');
+        }      } catch (error) {
+        logMessage('Could not determine field structure, using basic fields');
         // Default to known fields if we can't get the structure
         availableFields = ['id', 'name', 'price', 'description'];
       }
     }
     
-    console.log(`Available fields in Airtable: ${availableFields.join(', ')}`);// Prepare records for creation or update
+    // Prepare records for creation or update
     const recordsToCreate = [];
     const recordsToUpdate = [];
-      console.log('\n===== PROCESSING SERVICES FOR AIRTABLE =====');
-    
-    // Process only new services for creation
-    console.log(`Processing ${newServices.length} new services for creation...`);
+    logMessage('=== PROCESSING SERVICES ===');
+      // Process only new services for creation
+    logMessage(`Processing ${newServices.length} new services...`);
     newServices.forEach((service, index) => {
-      console.log(`\nProcessing new service ${index + 1}/${newServices.length}: ${service.name} (ID: ${service.id})`);
-      
       // Create a fields object with the correct field names for Airtable
       // Only include fields that exist in Airtable
       const fields = {};
@@ -187,15 +196,9 @@ async function backupServicesToAirtable() {
           fields[fieldName] = fieldValue;
         }
       }
-        // Log what fields were mapped
-      console.log(`Mapped fields for ${service.name}:`, Object.keys(fields).join(', '));
-      if (service.pricing) {
-        console.log(`Pricing data mapped: small=${fields.small || 'N/A'}, medium=${fields.medium || 'N/A'}, large=${fields.large || 'N/A'}, extra_large=${fields.extra_large || 'N/A'}`);
-      }
-      
-      // Log any missing required fields
+        // Log any missing required fields
       if (!fields.id || !fields.name) {
-        console.warn(`Service is missing required fields: id=${service.id}, name=${service.name}`);
+        logMessage(`Service missing required fields: id=${service.id}, name=${service.name}`);
       }
       
       // Only proceed if we have at least the required fields (id and name)
@@ -204,13 +207,12 @@ async function backupServicesToAirtable() {
           fields: fields
         });
       } else {
-        console.warn(`Skipping service with id ${service.id || 'unknown'} due to missing required fields`);
+        logMessage(`Skipping service with id ${service.id || 'unknown'}`);
       }
-    });
-      // Create new records
+    });    // Create new records
     let createdCount = 0;
     if (recordsToCreate.length > 0) {
-      console.log(`Creating ${recordsToCreate.length} new records in Airtable...`);
+      logMessage(`Creating ${recordsToCreate.length} new records...`);
       
       // Process in batches of 10 to respect Airtable API limits
       const batches = [];
@@ -224,30 +226,28 @@ async function backupServicesToAirtable() {
         try {
           const createdRecords = await airtableBase(airtableTable).create(batch);
           createdCount += createdRecords.length;
-          console.log(`Create batch ${index + 1}/${batches.length} completed - ${createdRecords.length} records created`);
+          logMessage(`Batch ${index + 1}/${batches.length}: ${createdRecords.length} created`);
         } catch (err) {
-          console.error(`Error creating records in batch ${index + 1}:`, err);
-          console.log('Attempting to continue with next batch...');
+          logMessage(`Error in batch ${index + 1}: ${err.message}`);
         }
       }
     }
     
     // Skip updates since we're only backing up new records
-    console.log('Skipping updates as requested - only backing up new records.');
+    logMessage('Skipping updates - only backing up new records');
     const updatedCount = 0;
     
-    console.log(`===== SERVICES BACKUP COMPLETED - Created: ${createdCount}, Updated: ${updatedCount} =====`);
+    logMessage(`=== BACKUP COMPLETE - Created: ${createdCount}, Updated: ${updatedCount} ===`);
     return { 
       success: true, 
       message: 'Services backup completed successfully', 
       created: createdCount, 
       updated: updatedCount 
-    };
-  } catch (error) {
-    console.error('ERROR DURING SERVICES BACKUP:', error);
+    };  } catch (error) {
+    logMessage(`ERROR: ${error.message}`);
     return { 
       success: false, 
-      message: `Error during services backup: ${error.message}` 
+      message: `Error during backup: ${error.message}` 
     };
   }
 }
@@ -261,26 +261,23 @@ export default async function handler(req, res) {
   if (!isAuthorizedCron && !isLocalDevelopment) {
     return res.status(401).json({ error: 'Unauthorized access' });
   }
-  
-  try {
-    console.log('===== SERVICES BACKUP PROCESS STARTED =====');
+    try {
+    logMessage('=== SERVICES BACKUP STARTED ===');
     const result = await backupServicesToAirtable();
-    console.log('Services backup process completed');
     
     return res.status(200).json({
       success: true,
       message: result.message,
       created: result.created,
       updated: result.updated,
-      timestamp: new Date().toISOString(),
-      philippinesTime: new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' })
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('ERROR IN MAIN PROCESS:', error);
+    logMessage(`ERROR: ${error.message}`);
     
     return res.status(500).json({
       success: false,
-      message: `Error in services backup process: ${error.message}`,
+      message: `Error: ${error.message}`,
       timestamp: new Date().toISOString()
     });
   }
@@ -292,10 +289,10 @@ if (isMainModule) {
   backupServicesToAirtable()
     .then(result => {
       if (result.success) {
-        console.log(`Backup summary: Created ${result.created}, Updated ${result.updated}`);
+        logMessage(`Backup summary: Created ${result.created}, Updated ${result.updated}`);
         process.exit(0);
       } else {
-        console.error(`Backup failed: ${result.message}`);
+        logMessage(`Backup failed: ${result.message}`);
         process.exit(1);
       }
     });

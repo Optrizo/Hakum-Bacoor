@@ -26,7 +26,7 @@ jobs:
         run: npm ci || npm install
       
       - name: Run crew data backup script
-        run: node transfer-crew-data.js
+        run: node api/backup-crew-data.js
         env:
           # Pass environment variables from GitHub secrets
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}          
