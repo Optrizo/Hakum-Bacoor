@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useQueue } from '../context/QueueContext';
+import { useTheme } from '../context/ThemeContext';
 import { Car } from '../types';
 
 const CustomerView: React.FC = () => {
   const { cars, crews } = useQueue();
+  const { theme, toggleTheme } = useTheme();
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
   useEffect(() => {
@@ -105,7 +107,13 @@ const CustomerView: React.FC = () => {
     <div className="h-screen bg-background-light dark:bg-black flex flex-col items-center p-3 font-sans overflow-hidden">
       <header className="w-full max-w-7xl bg-transparent mb-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <img src="/Hakum V2 (Blue).png" alt="Hakum Auto Care" className="h-14 w-auto" />
+          <button onClick={toggleTheme} className="transition-transform duration-300 ease-in-out hover:scale-105" title="Toggle Theme">
+            <img 
+              src={theme === 'dark' ? "/Hakum V2 (OW).png" : "/Hakum V2 (Blue).png"} 
+              alt="Hakum Auto Care" 
+              className="h-14 w-auto" 
+            />
+          </button>
           <span className="text-text-primary-light dark:text-white text-3xl font-bold tracking-wide uppercase">Hakum Auto Care</span>
         </div>
         <div className="text-right">
