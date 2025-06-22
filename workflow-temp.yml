@@ -1,0 +1,60 @@
+name: Daily Data Backup
+
+on:
+  schedule:
+    # Run at 4:00 PM UTC every day (12:00 AM Philippines Time / UTC+8)
+    - cron: '0 16 * * *'
+  
+  # Allow manual triggering for testing
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Validate package.json
+        run: |
+          # Check if package.json is valid JSON
+          cat package.json | jq empty || { echo "Invalid package.json"; exit 1; }
+          echo "package.json is valid"
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Run crew data backup script
+        run: node api/backup-crew-data.js
+        env:
+          # Pass environment variables from GitHub secrets
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}          
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_AIRTABLE_API_KEY: ${{ secrets.VITE_AIRTABLE_API_KEY }}
+          VITE_AIRTABLE_BASE_ID: ${{ secrets.VITE_AIRTABLE_BASE_ID }}
+          VITE_AIRTABLE_TABLE_CREW: ${{ secrets.VITE_AIRTABLE_TABLE_CREW }}
+      
+      - name: Run services backup script
+        run: node api/backup-services.js
+        env:
+          # Pass environment variables from GitHub secrets
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}          
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_AIRTABLE_API_KEY: ${{ secrets.VITE_AIRTABLE_API_KEY }}
+          VITE_AIRTABLE_BASE_ID: ${{ secrets.VITE_AIRTABLE_BASE_ID }}
+          VITE_AIRTABLE_TABLE_SERVICES: ${{ secrets.VITE_AIRTABLE_TABLE_SERVICES }}
+      
+      - name: Save backup logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-logs
+          path: backup-logs.txt
+          retention-days: 30
