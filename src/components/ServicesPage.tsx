@@ -418,35 +418,35 @@ const ServicesPage: React.FC = () => {
             <p className="text-xs sm:text-sm lg:text-base text-text-secondary-light dark:text-text-secondary-dark mt-1">
               Manage your service offerings and package deals
             </p>
-          </div>
+        </div>
           <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
             <div className="text-xs sm:text-sm text-text-secondary-light dark:text-text-secondary-dark">
               <span className="font-medium">{services.length}</span> Services, <span className="font-medium">{packages.length}</span> Packages
             </div>
-            {!showAddForm && !editingService && !editingPackage && (
-              <button
-                onClick={() => setShowAddForm(true)}
+        {!showAddForm && !editingService && !editingPackage && (
+          <button
+            onClick={() => setShowAddForm(true)}
                 className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-brand-blue hover:bg-brand-dark-blue transition-all duration-200 transform hover:scale-105 active:scale-95"
-              >
+          >
                 <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
                 <span className="hidden xs:inline">Add New</span>
                 <span className="xs:hidden">Add</span>
-              </button>
-            )}
+          </button>
+        )}
           </div>
-        </div>
+      </div>
 
-        {/* Tabs */}
+      {/* Tabs */}
         <div className="border-b border-border-light dark:border-border-dark mb-4 sm:mb-6">
           <nav className="-mb-px flex space-x-6 sm:space-x-8">
-            <button
+          <button
               onClick={() => setActiveTab('services')}
               className={`py-2 px-1 border-b-2 font-medium text-sm sm:text-base transition-colors duration-200 ${
-                activeTab === 'services'
+              activeTab === 'services'
                   ? 'border-brand-blue text-brand-blue'
                   : 'border-transparent text-text-secondary-light dark:text-text-secondary-dark hover:text-text-primary-light dark:hover:text-text-primary-dark hover:border-border-light dark:hover:border-border-dark'
-              }`}
-            >
+            }`}
+          >
               <div className="flex items-center gap-2">
                 <Wrench className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>Services</span>
@@ -454,15 +454,15 @@ const ServicesPage: React.FC = () => {
                   {services.length}
                 </span>
               </div>
-            </button>
-            <button
+          </button>
+          <button
               onClick={() => setActiveTab('packages')}
               className={`py-2 px-1 border-b-2 font-medium text-sm sm:text-base transition-colors duration-200 ${
-                activeTab === 'packages'
+              activeTab === 'packages'
                   ? 'border-brand-blue text-brand-blue'
                   : 'border-transparent text-text-secondary-light dark:text-text-secondary-dark hover:text-text-primary-light dark:hover:text-text-primary-dark hover:border-border-light dark:hover:border-border-dark'
-              }`}
-            >
+            }`}
+          >
               <div className="flex items-center gap-2">
                 <Package className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>Packages</span>
@@ -470,9 +470,9 @@ const ServicesPage: React.FC = () => {
                   {packages.length}
                 </span>
               </div>
-            </button>
-          </nav>
-        </div>
+          </button>
+        </nav>
+      </div>
 
         {/* Forms */}
         {showAddForm && activeTab === 'services' && !editingService && ServiceForm}
@@ -482,23 +482,23 @@ const ServicesPage: React.FC = () => {
 
         {/* Content */}
         {activeTab === 'services' && (
-          <ServiceList 
-            services={services} 
-            onEdit={handleEditService} 
-            onDelete={handleDeleteService} 
-          />
+            <ServiceList 
+              services={services} 
+              onEdit={handleEditService} 
+              onDelete={handleDeleteService} 
+            />
         )}
         {activeTab === 'packages' && (
-          <PackageList 
-            packages={packages} 
-            services={services} 
-            onEdit={handleEditPackage} 
-            onDelete={handleDeletePackage} 
-          />
-        )}
+            <PackageList 
+              packages={packages} 
+              services={services} 
+              onEdit={handleEditPackage} 
+              onDelete={handleDeletePackage} 
+            />
+          )}
       </div>
-    </div>
-  );
+                          </div>
+                        );
 };
 
 

@@ -54,6 +54,9 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
     return busyIds;
   }, [cars]);
 
+  // Helper: are all crew busy?
+  const allCrewBusy = crews.length > 0 && crews.every(crew => busyCrewIds.has(crew.id));
+
   useEffect(() => {
     const prices: Record<string, number> = {};
     services.forEach(service => {
@@ -267,19 +270,19 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
     }
     
     setIsSubmitting(true);
-    try {
+      try {
       // Sanitize and prepare data
-      const selectedServiceNames = formData.selectedServices.map(id => {
-        const service = services.find(s => s.id === id);
-        return service?.name || '';
+        const selectedServiceNames = formData.selectedServices.map(id => {
+          const service = services.find(s => s.id === id);
+          return service?.name || '';
       }).filter(name => name.length > 0); // Remove empty names
       
-      const selectedPackageNames = formData.selectedPackages.map(id => {
-        const pkg = packages.find(p => p.id === id);
-        return pkg?.name || '';
+        const selectedPackageNames = formData.selectedPackages.map(id => {
+          const pkg = packages.find(p => p.id === id);
+          return pkg?.name || '';
       }).filter(name => name.length > 0); // Remove empty names
       
-      const allServiceNames = [...selectedServiceNames, ...selectedPackageNames];
+        const allServiceNames = [...selectedServiceNames, ...selectedPackageNames];
       
       // Validate that we have at least one valid service
       if (allServiceNames.length === 0) {
@@ -291,12 +294,18 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
       if (isNaN(finalCost) || finalCost < 0) {
         throw new Error('Invalid total cost. Please enter a valid amount.');
       }
-      
+        
+      // --- CREW BUSY LOGIC ---
+      let statusToUse = formData.status;
+      if (allCrewBusy) {
+        statusToUse = 'waiting';
+        setFormError('All crew are currently busy. The car has been added to the waiting queue.');
+      }
       await addCar({
         plate: formData.plate.toUpperCase().trim(),
         model: formData.model.trim(),
         size: formData.size,
-        status: formData.status,
+        status: statusToUse,
         phone: formData.phone.trim() || '',
         crew: formData.crew,
         service: allServiceNames.join(', '),
@@ -358,7 +367,6 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Column 1: Plate, Model, Size, Phone */}
           <div className="space-y-4">
-        <div>
               <label htmlFor="plate" className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">
                 License Plate <span className="text-red-500">*</span>
           </label>
@@ -516,8 +524,9 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
             </div>
           </div>
 
-          {/* Column 2: Services & Packages */}
+          {/* Column 2: Services, Packages, Status, Crew */}
           <div className="space-y-4">
+            {/* Select Services */}
             <div className="p-4 rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-gray-900/50">
               <div className="flex justify-between items-center cursor-pointer" onClick={() => setIsServicesOpen(!isServicesOpen)}>
                 <span className="font-medium text-text-primary-light dark:text-text-primary-dark">
@@ -525,16 +534,16 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
                 </span>
                 <svg className={`w-5 h-5 transition-transform ${isServicesOpen ? 'transform rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
               </div>
-            {isServicesOpen && (
+              {isServicesOpen && (
                 <div className="mt-2 space-y-2 max-h-40 overflow-y-auto pr-2">
                   {services.map((service) => (
                     <div key={service.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
                       <label htmlFor={`service-${service.id}`} className="flex items-center cursor-pointer flex-grow">
-                          <input
-                            type="checkbox"
+                        <input
+                          type="checkbox"
                           id={`service-${service.id}`}
-                            checked={formData.selectedServices.includes(service.id)}
-                            onChange={() => handleServiceToggle(service.id)}
+                          checked={formData.selectedServices.includes(service.id)}
+                          onChange={() => handleServiceToggle(service.id)}
                           className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-brand-blue focus:ring-brand-blue"
                         />
                         <span className="ml-3 text-sm text-text-primary-light dark:text-text-primary-dark">{service.name}</span>
@@ -542,10 +551,11 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
                       <span className="text-sm font-semibold text-text-secondary-light dark:text-text-secondary-dark">₱{servicePrices[service.id]?.toLocaleString()}</span>
                     </div>
                   ))}
-              </div>
-            )}
-          </div>
-            
+                </div>
+              )}
+            </div>
+
+            {/* Select Packages */}
             <div className="p-4 rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-gray-900/50">
               <div className="flex justify-between items-center cursor-pointer" onClick={() => setIsPackagesOpen(!isPackagesOpen)}>
                 <span className="font-medium text-text-primary-light dark:text-text-primary-dark">
@@ -553,16 +563,16 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
                 </span>
                 <svg className={`w-5 h-5 transition-transform ${isPackagesOpen ? 'transform rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
               </div>
-            {isPackagesOpen && (
+              {isPackagesOpen && (
                 <div className="mt-2 space-y-2 max-h-40 overflow-y-auto pr-2">
                   {packages.map((pkg) => (
                     <div key={pkg.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700">
                       <label htmlFor={`pkg-${pkg.id}`} className="flex items-center cursor-pointer flex-grow">
-                          <input
-                            type="checkbox"
+                        <input
+                          type="checkbox"
                           id={`pkg-${pkg.id}`}
-                            checked={formData.selectedPackages.includes(pkg.id)}
-                            onChange={() => handlePackageToggle(pkg.id)}
+                          checked={formData.selectedPackages.includes(pkg.id)}
+                          onChange={() => handlePackageToggle(pkg.id)}
                           className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-brand-blue focus:ring-brand-blue"
                         />
                         <span className="ml-3 text-sm text-text-primary-light dark:text-text-primary-dark">{pkg.name}</span>
@@ -570,10 +580,35 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
                       <span className="text-sm font-semibold text-text-secondary-light dark:text-text-secondary-dark">₱{packagePrices[pkg.id]?.toLocaleString()}</span>
                     </div>
                   ))}
-              </div>
-            )}
-          </div>
-            
+                </div>
+              )}
+            </div>
+
+            {/* Initial Status */}
+            <div className="p-4 rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-gray-900/50">
+              <label htmlFor="status" className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">
+                Initial Status <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="status"
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="block w-full rounded-md bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark shadow-sm focus:ring-brand-blue focus:border-brand-blue sm:text-sm p-2"
+                required
+              >
+                <option value="waiting">Waiting</option>
+                <option value="in-progress" disabled={allCrewBusy}>In Progress</option>
+              </select>
+              <p className="mt-1 text-xs text-text-secondary-light dark:text-text-secondary-dark">
+                Set status to 'In Progress' if service is starting immediately.
+                {allCrewBusy && (
+                  <span className="ml-2 font-semibold text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-900/40 px-2 py-1 rounded">All crew are busy. Only 'Waiting' is available.</span>
+                )}
+              </p>
+            </div>
+
+            {/* Assign Crew */}
             <div className="p-4 rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-gray-900/50">
               <div className="flex justify-between items-center cursor-pointer" onClick={() => setIsCrewOpen(!isCrewOpen)}>
                 <span className="font-medium text-text-primary-light dark:text-text-primary-dark">
@@ -613,48 +648,8 @@ const AddCarForm: React.FC<AddCarFormProps> = ({ onComplete }) => {
                 </div>
               )}
             </div>
-            
-            {errors.crew && (
-              <p className="mt-1 text-xs text-red-500 flex items-start">
-                <svg className="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                {errors.crew}
-              </p>
-            )}
-
-            <div>
-              <label htmlFor="status" className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">
-                Initial Status <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="status"
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="block w-full rounded-md bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark shadow-sm focus:ring-brand-blue focus:border-brand-blue sm:text-sm p-2"
-                required
-              >
-                <option value="waiting">Waiting</option>
-                <option value="in-progress">In Progress</option>
-              </select>
-              <p className="mt-1 text-xs text-text-secondary-light dark:text-text-secondary-dark">
-                Set status to 'In Progress' if service is starting immediately.
-              </p>
-            </div>
-            
-            {errors.services && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                <p className="text-xs text-red-600 dark:text-red-400 flex items-start">
-                  <svg className="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  {errors.services}
-                </p>
-              </div>
-            )}
           </div>
-        </div>
+     
 
         <div className="border-t border-border-light dark:border-border-dark pt-6 mt-6">
             <div className="flex justify-between items-center">

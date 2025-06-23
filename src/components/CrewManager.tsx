@@ -218,49 +218,49 @@ const CrewManager: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3">
-                        <div className="flex-shrink-0">
+                  <div className="flex-shrink-0">
                           <div className="h-8 w-8 sm:h-10 sm:w-10 bg-brand-blue text-white rounded-full flex items-center justify-center">
                             <span className="text-sm sm:text-base font-medium">
                               {crew.name.charAt(0).toUpperCase()}
                             </span>
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
+                    </div>
+                  </div>
+                      <div className="flex-1 min-w-0">
                           <h3 className="text-sm sm:text-base lg:text-lg font-medium text-text-primary-light dark:text-text-primary-dark truncate">
                             {crew.name}
-                          </h3>
+                        </h3>
                           {crew.phone && (
                             <div className="flex items-center gap-1 mt-1">
                               <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-text-secondary-light dark:text-text-secondary-dark flex-shrink-0" />
                               <span className="text-xs sm:text-sm text-text-secondary-light dark:text-text-secondary-dark truncate">
                                 {crew.phone}
                               </span>
-                            </div>
-                          )}
                         </div>
-                      </div>
+                      )}
+                    </div>
+                  </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button
+                  <button
                         onClick={() => handleEdit(crew)}
                         className="inline-flex items-center p-1.5 sm:p-2 border border-border-light dark:border-border-dark shadow-sm text-xs font-medium rounded-md text-text-secondary-light dark:text-text-secondary-dark bg-surface-light dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-light dark:focus:ring-offset-surface-dark focus:ring-brand-blue transition-colors"
                         title="Edit crew member"
-                      >
-                        <Edit2 className="h-4 w-4" />
+                  >
+                    <Edit2 className="h-4 w-4" />
                         <span className="sr-only">Edit</span>
-                      </button>
-                      <button
+                  </button>
+                  <button
                         onClick={() => handleDelete(crew.id)}
                         className="inline-flex items-center p-1.5 sm:p-2 border border-border-light dark:border-border-dark shadow-sm text-xs font-medium rounded-md text-red-600 dark:text-red-400 bg-surface-light dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-light dark:focus:ring-offset-surface-dark focus:ring-red-500 transition-colors"
                         title="Delete crew member"
-                      >
-                        <Trash2 className="h-4 w-4" />
+                  >
+                    <Trash2 className="h-4 w-4" />
                         <span className="sr-only">Delete</span>
-                      </button>
-                    </div>
-                  </div>
+                  </button>
                 </div>
-              ))}
+              </div>
+                </div>
+          ))}
             </div>
           )}
         </div>

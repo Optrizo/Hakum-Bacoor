@@ -63,15 +63,13 @@ const CustomerView: React.FC = () => {
                   <div key={car.id} className={`bg-background-light dark:bg-[#2C2C2E] rounded-lg flex justify-between items-center flex-1 min-h-0 ${isCrowded ? 'p-2' : 'p-3'}`}>
                     <div className="flex-1 min-w-0">
                       <p className={`font-bold tracking-wider text-text-primary-light dark:text-gray-100 ${isCrowded ? 'text-xl' : 'text-2xl'}`}>{car.plate}</p>
-                      <p className={`font-semibold mt-1 truncate ${isCrowded ? 'text-sm text-text-secondary-light dark:text-gray-300' : 'text-base text-text-secondary-light dark:text-gray-300'}`}>{car.model}</p>
-                      <p 
-                        className={`font-medium text-brand-blue dark:text-brand-cyan truncate ${isCrowded ? 'text-xs' : 'text-sm'}`}
-                        title={car.service}
-                      >
+                      <p className={`font-semibold mt-1 ${isCrowded ? 'text-sm text-text-secondary-light dark:text-gray-300' : 'text-base text-text-secondary-light dark:text-gray-300'}`}>{car.model}</p>
+                      <div className={`font-medium text-brand-blue dark:text-brand-cyan whitespace-pre-line break-words ${isCrowded ? 'text-xs' : 'text-sm'} mt-1`} title={car.service}>
                         {car.service}
-                      </p>
+                      </div>
                       {crewNames.length > 0 && (
                         <div className={`flex items-center gap-1.5 flex-wrap ${isCrowded ? 'mt-1' : 'mt-2'}`}>
+                          <span className={`mr-2 font-semibold text-text-secondary-light dark:text-gray-300 ${isCrowded ? 'text-[10px]' : 'text-xs'}`}>Crew Assigned:</span>
                           {crewNames.map((name, idx) => (
                             <span 
                               key={idx} 
@@ -83,11 +81,6 @@ const CustomerView: React.FC = () => {
                           ))}
                         </div>
                       )}
-                    </div>
-                    <div className="text-right flex-shrink-0 pl-3">
-                      <p className={`font-mono font-semibold text-text-secondary-light dark:text-gray-200 ${isCrowded ? 'text-xl' : 'text-2xl'}`}>
-                        {new Date(car.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
-                      </p>
                     </div>
                   </div>
                 );

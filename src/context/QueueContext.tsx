@@ -402,7 +402,7 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         } else if (error.code === '42P01') {
           throw new Error('Database table not found. Please contact support.');
         } else {
-          throw new Error(`Failed to update vehicle: ${error.message}`);
+        throw new Error(`Failed to update vehicle: ${error.message}`);
         }
       }
     } catch (err) {
@@ -687,7 +687,7 @@ export const QueueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return data && data.length > 0 ? data[0] : null;
     } catch (err) {
       console.error('Error in searchCarHistory:', err);
-      if (err instanceof Error) {
+       if (err instanceof Error) {
         throw err;
       }
       throw new Error('An unknown error occurred while searching vehicle history.');
